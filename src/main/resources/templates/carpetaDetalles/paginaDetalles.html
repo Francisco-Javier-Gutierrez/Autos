@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title>Control de Inventario - Detalles</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+	<div th:replace="~{fragmentos :: menu}"></div>
+	
+	<div class="container mt-4">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h2>Lista de Stock e Inventario (detProducto)</h2>
+			<a th:href="@{/rutaDetalles/nuevo}" class="btn btn-success">📦 Registrar Stock Nuevo</a>
+		</div>
+
+		<div class="table-responsive shadow-sm rounded">
+			<table class="table table-bordered table-striped align-middle bg-white m-0">
+				<thead class="text-white text-center" style="background-color: #0d6efd;">
+					<tr>
+						<th>ID Detalle</th>
+						<th>ID Producto Relacionado</th>
+						<th>ID Color</th>
+						<th>Cantidad en Stock</th>
+						<th>Transmisión</th>
+						<th>Acciones</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="det : ${detalles}">
+						<td class="text-center fw-bold" th:text="${det.id}"></td>
+						<td class="text-center fw-bold text-primary" th:text="${det.productoId}"></td>
+						<td class="text-center" th:text="${det.colorId}"></td>
+						<td class="text-center fw-bold" th:text="${det.stock}"
+							th:classappend="${det.stock == 0 ? 'text-danger' : 'text-dark'}"></td>
+						<td th:text="${det.transmision}"></td>
+						<td class="text-center">
+							<div class="d-flex gap-1 justify-content-center">
+								<a th:href="@{'/rutaDetalles/editar/' + ${det.id}}" class="btn btn-sm btn-primary">✏️ Editar</a>
+								<a th:href="@{'/rutaDetalles/eliminar/' + ${det.id}}" 
+								   class="btn btn-sm btn-danger" 
+								   onclick="return confirm('¿Está seguro de que desea eliminar este registro de inventario?')">🗑️ Eliminar</a>
+							</div>
+						</td>
+					</tr>
+					<tr th:if="${#lists.isEmpty(detalles)}">
+						<td colspan="6" class="text-center text-muted py-4">No hay registros de inventario asignados.</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</body>
+</html>
