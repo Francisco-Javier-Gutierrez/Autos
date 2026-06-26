@@ -67,5 +67,8 @@ public class Pedido {
 	@PrePersist
     private void inicializarUuid() {
         this.uuid = UUID.randomUUID();
+        if (this.fechaPedido == null) {
+            this.fechaPedido = LocalDateTime.now();
+        }
     }
 }

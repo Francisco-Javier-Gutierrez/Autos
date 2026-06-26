@@ -28,6 +28,7 @@ public class PedidoService {
 	public void guardar(PedidoDTO pedidoDTO) {
 		Pedido pedido = mapper.map(pedidoDTO, Pedido.class);
 		pedido.setId(null);
+		System.out.println(pedido);
 		pedidoRepo.save(pedido);
 	}
 
