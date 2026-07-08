@@ -18,6 +18,9 @@ public class ClienteService {
 	private ClienteRepo clienteRepo;
 
 	@Autowired
+	private com.utsem.app.repo.PedidoRepo pedidoRepo;
+
+	@Autowired
 	private ModelMapper mapper;
 
 	public List<ClienteDTO> listar() {
@@ -54,6 +57,9 @@ public class ClienteService {
 	public void borrar(UUID uuid) {
 		Cliente c = clienteRepo.findByUuid(uuid)
 				.orElseThrow(() -> new EntityNotFoundException("No se encontró el cliente"));
+		if (pedidoRepo.existsByCliente(c)) {
+			throw new IllegalStateException("No se puede eliminar el cliente porque tiene pedidos asociados.");
+		}
 		clienteRepo.delete(c);
 	}
 	

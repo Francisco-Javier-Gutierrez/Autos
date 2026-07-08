@@ -11,5 +11,7 @@ import java.util.UUID;
 public interface PedidoRepo extends JpaRepository<Pedido, Long> {
 	Optional<Pedido> findByUuid(UUID uuid);
 	
+	boolean existsByCliente(com.utsem.app.model.Cliente cliente);
+	
 	void deleteByUuid(UUID uuid);
 }

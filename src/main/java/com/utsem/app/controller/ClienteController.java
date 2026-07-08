@@ -58,8 +58,13 @@ public class ClienteController {
 	}
 
 	@GetMapping("eliminar/{uuid}")
-	public String metodoElimina(@PathVariable UUID uuid) {
-		clienteService.borrar(uuid);
+	public String metodoElimina(@PathVariable UUID uuid, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+		try {
+			clienteService.borrar(uuid);
+			redirectAttributes.addFlashAttribute("mensaje", "Cliente eliminado con éxito.");
+		} catch (IllegalStateException e) {
+			redirectAttributes.addFlashAttribute("mensajeError", e.getMessage());
+		}
 		return "redirect:/rutaClientes/listar";
 	}
 }

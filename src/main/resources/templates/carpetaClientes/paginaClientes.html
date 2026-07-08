@@ -11,6 +11,9 @@
 	<div class="container-fluid mt-4">
 		<h1 class="mb-4">Catálogo de Clientes</h1>
 		
+		<div class="alert alert-success py-2" th:if="${mensaje}" th:text="${mensaje}"></div>
+		<div class="alert alert-danger py-2" th:if="${mensajeError}" th:text="${mensajeError}"></div>
+		
 		<a th:href="@{/rutaClientes/nuevo}" class="btn btn-primary mb-3">➕ Nuevo Cliente</a>
 
 		<table class="table table-bordered table-striped table-sm">

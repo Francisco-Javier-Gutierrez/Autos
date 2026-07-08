@@ -23,10 +23,10 @@
 					<th>Precio</th>
 					<th>Condición</th>
 					<th>Estatus</th>
-					<th>Val. Rubi</th>
-					<th>Fav. Perla</th>
-					<th>Nivel Francisco</th>
-					<th>Reseña Francely</th>
+					<th th:if="${randomCol == 0}">Val. Rubi</th>
+					<th th:if="${randomCol == 1}">Fav. Perla</th>
+					<th th:if="${randomCol == 2}">Nivel Francisco</th>
+					<th th:if="${randomCol == 3}">Reseña Francely</th>
 					<th>Acciones</th>
 				</tr>
 			</thead>
@@ -39,15 +39,15 @@
 					<td th:text="${'$' + #numbers.formatDecimal(producto.precio, 1, 'COMMA', 2, 'POINT')}"></td>
 					<td th:text="${producto.condicion}"></td>
 					<td th:text="${producto.estado}"></td>
-					<td th:text="${producto.valoracionRubiFA}"></td>
-					<td th:text="${producto.favoritoPerlaMM ? 'Sí' : 'No'}"></td>
-					<td th:switch="${producto.nivelInteresFranciscoJavierGH}">
+					<td th:if="${randomCol == 0}" th:text="${producto.valoracionRubiFA}"></td>
+					<td th:if="${randomCol == 1}" th:text="${producto.favoritoPerlaMM ? 'Sí' : 'No'}"></td>
+					<td th:if="${randomCol == 2}" th:switch="${producto.nivelInteresFranciscoJavierGH}">
 						<span th:case="1">Bajo</span>
 						<span th:case="2">Medio</span>
 						<span th:case="3">Alto</span>
 						<span th:case="*">-</span>
 					</td>
-					<td th:text="${producto.resenaFrancelyAnaidGH}"></td>
+					<td th:if="${randomCol == 3}" th:text="${producto.resenaFrancelyAnaidGH}"></td>
 					<td>
 						<a th:href="@{'/rutaProductos/editar/' + ${producto.uuid}}" class="btn btn-sm btn-primary">✏️</a>
 						<a th:href="@{'/rutaProductos/eliminar/' + ${producto.uuid}}" 
@@ -56,7 +56,7 @@
 					</td>
 				</tr>
 				<tr th:if="${#lists.isEmpty(productos)}">
-					<td colspan="12" class="text-center text-muted py-4">No hay vehículos registrados en el catálogo.</td>
+					<td colspan="9" class="text-center text-muted py-4">No hay vehículos registrados en el catálogo.</td>
 				</tr>
 			</tbody>
 		</table>

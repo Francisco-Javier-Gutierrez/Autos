@@ -30,6 +30,7 @@ public class ProductoController {
 	@GetMapping("listar")
 	public String metodoListar(Model model) {
 		model.addAttribute("productos", productoService.listar());
+		model.addAttribute("randomCol", java.util.concurrent.ThreadLocalRandom.current().nextInt(4));
 		return "carpetaProductos/paginaProductos";
 	}
 

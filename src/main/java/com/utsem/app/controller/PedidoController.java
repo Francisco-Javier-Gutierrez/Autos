@@ -34,6 +34,7 @@ public class PedidoController {
 	public String metodoListar(Model model) {
 		model.addAttribute("mensaje", "Listado de Pedidos");
 		model.addAttribute("pedidos", pedidoService.listar());
+		model.addAttribute("randomCol", java.util.concurrent.ThreadLocalRandom.current().nextInt(4));
 		return "carpetaPedidos/paginaPedidos";
 	}
 
