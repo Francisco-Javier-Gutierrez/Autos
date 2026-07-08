@@ -14,11 +14,15 @@ public class DetProdDTO {
 
 	private Long id;
 
+	private java.util.UUID uuid;
+
 	@NotNull(message = "¡Debes seleccionar un producto válido!")
 	private Long productoId;
 
 	@NotNull(message = "¡El color es obligatorio!")
-	private Integer colorId;
+	private Long colorId;
+
+	private String colorNombre;
 
 	@NotNull(message = "¡El stock es obligatorio!")
 	@Min(value = 0, message = "¡El stock no puede ser un número negativo!")
