@@ -8,6 +8,8 @@ import java.util.List;
 @Repository
 public interface DetProdRepo extends JpaRepository<DetProd, Long> {
 	
+	java.util.Optional<DetProd> findByUuid(java.util.UUID uuid);
+
 	List<DetProd> findByProductoId(Long productoId);
 	
 }

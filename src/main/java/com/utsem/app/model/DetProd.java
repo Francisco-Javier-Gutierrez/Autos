@@ -23,12 +23,21 @@ public class DetProd {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@jakarta.persistence.Column(unique = true, nullable = false)
+	private java.util.UUID uuid;
+
+	@jakarta.persistence.PrePersist
+	private void inicializarUuid() {
+		this.uuid = java.util.UUID.randomUUID();
+	}
+
 	@ManyToOne
 	@JoinColumn(name = "productId", nullable = false)
 	private Producto producto;
 
-	@Column(name = "colorId")
-	private Integer colorId;
+	@ManyToOne
+	@JoinColumn(name = "colorId")
+	private Color color;
 
 	@Column
 	private Integer stock;
