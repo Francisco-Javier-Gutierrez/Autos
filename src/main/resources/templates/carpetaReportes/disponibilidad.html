@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title>Reporte de Disponibilidad por Color</title>
+	<div th:replace="~{fragmentos :: bootstrap}"></div>
+</head>
+<body>
+	<div th:replace="~{fragmentos :: menu}"></div>
+	
+	<div class="container-fluid mt-4">
+		<h1 class="mb-4">Reporte de Disponibilidad de Vehículos por Color</h1>
+		
+		<div th:if="${#maps.isEmpty(reporte)}" class="alert alert-warning py-3 text-center">
+			No hay datos de inventario o colores registrados para generar el reporte.
+		</div>
+
+		<div th:each="entry : ${reporte}" class="mb-5">
+			<div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+				<h3 class="mb-0">
+					🎨 Color: <span class="fw-bold text-primary" th:text="${entry.key.nombre}">Azul</span>
+					<span class="small text-muted" th:text="'(' + ${entry.key.estadoColor} + ')'"></span>
+				</h3>
+				<span class="badge bg-primary fs-6" 
+				      th:text="'Total Stock: ' + ${#aggregates.sum(entry.value.![stock])}">
+					Total Stock: 0
+				</span>
+			</div>
+
+			<table class="table table-bordered table-striped table-sm">
+				<thead class="table-dark">
+					<tr>
+						<th>Marca</th>
+						<th>SubMarca</th>
+						<th>Modelo</th>
+						<th>Año</th>
+						<th>Precio Unitario</th>
+						<th>Transmisión</th>
+						<th>Stock Disponible</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="det : ${entry.value}">
+						<td th:text="${det.producto.marca}"></td>
+						<td th:text="${det.producto.subMarca}"></td>
+						<td th:text="${det.producto.modelo}"></td>
+						<td class="text-center" th:text="${det.producto.anio}"></td>
+						<td class="text-end" th:text="${'$' + #numbers.formatDecimal(det.producto.precio, 1, 'COMMA', 2, 'POINT')}"></td>
+						<td th:text="${det.transmision}"></td>
+						<td class="text-center fw-bold" th:text="${det.stock}"
+						    th:classappend="${det.stock == 0 ? 'text-danger' : 'text-dark'}"></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</body>
+</html>
