@@ -11,6 +11,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Version;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -28,11 +30,13 @@ public class Pedido {
 	@Version
 	private Integer version;
 
-	@Column
-	private Integer idDetProd;
+	@ManyToOne
+	@JoinColumn(name = "idDetProd")
+	private DetProd detProd;
 
-	@Column
-	private Integer clienteId;
+	@ManyToOne
+	@JoinColumn(name = "clienteId")
+	private Cliente cliente;
 
 	@Column(length = 100)
 	private String numFactura;

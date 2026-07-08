@@ -73,7 +73,7 @@ public class ProductoController {
 
 	@GetMapping("eliminar/{uuid}")
 	public String metodoElimina(@PathVariable UUID uuid) {
-		productoService.borrar2(uuid);
+		productoService.borrar(uuid);
 		return "redirect:/rutaProductos/listar";
 	}
 }

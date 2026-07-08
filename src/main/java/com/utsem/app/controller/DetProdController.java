@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import com.utsem.app.dto.DetProdDTO;
 import com.utsem.app.service.DetProdService;
 import com.utsem.app.service.ProductoService;
+import com.utsem.app.service.ColorService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -24,6 +25,9 @@ public class DetProdController {
 	@Autowired
 	private ProductoService productoService;
 
+	@Autowired
+	private ColorService colorService;
+
 	@GetMapping("listar")
 	public String metodoListar(Model model) {
 		model.addAttribute("detalles", detProdService.listar());
@@ -34,6 +38,7 @@ public class DetProdController {
 	public String metodoNuevo(Model model) {
 		model.addAttribute("detalle", new DetProdDTO());
 		model.addAttribute("productos", productoService.listarEntidades()); // Envía entidades completas
+		model.addAttribute("colores", colorService.listar());
 		return "carpetaDetalles/paginaFormularioDetalle";
 	}
 
@@ -41,22 +46,35 @@ public class DetProdController {
 	public String metodoGuarda(@Valid @ModelAttribute("detalle") DetProdDTO detDto, BindingResult result, Model model) {
 		if (result.hasErrors()) {
 			model.addAttribute("productos", productoService.listarEntidades());
+			model.addAttribute("colores", colorService.listar());
 			return "carpetaDetalles/paginaFormularioDetalle";
 		}
 		detProdService.guardar(detDto);
 		return "redirect:/rutaDetalles/listar";
 	}
 
-	@GetMapping("editar/{id}")
-	public String metodoEditar(Model model, @PathVariable Long id) {
-		model.addAttribute("detalle", detProdService.obtenerPorId(id));
+	@PostMapping("actualizar")
+	public String metodoActualiza(@Valid @ModelAttribute("detalle") DetProdDTO detDto, BindingResult result, Model model) {
+		if (result.hasErrors()) {
+			model.addAttribute("productos", productoService.listarEntidades());
+			model.addAttribute("colores", colorService.listar());
+			return "carpetaDetalles/paginaFormularioDetalle";
+		}
+		detProdService.actualiza(detDto);
+		return "redirect:/rutaDetalles/listar";
+	}
+
+	@GetMapping("editar/{uuid}")
+	public String metodoEditar(Model model, @PathVariable java.util.UUID uuid) {
+		model.addAttribute("detalle", detProdService.obtenerPorUuid(uuid));
 		model.addAttribute("productos", productoService.listarEntidades());
+		model.addAttribute("colores", colorService.listar());
 		return "carpetaDetalles/paginaFormularioDetalle";
 	}
 
-	@GetMapping("eliminar/{id}")
-	public String metodoElimina(@PathVariable Long id) {
-		detProdService.borrar(id);
+	@GetMapping("eliminar/{uuid}")
+	public String metodoElimina(@PathVariable java.util.UUID uuid) {
+		detProdService.borrar(uuid);
 		return "redirect:/rutaDetalles/listar";
 	}
 }
