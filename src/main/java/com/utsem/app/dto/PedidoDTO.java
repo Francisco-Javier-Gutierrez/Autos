@@ -18,12 +18,15 @@ import lombok.AllArgsConstructor;
 public class PedidoDTO {
 
 	@NotNull(message = "¡Este campo es obligatorio!")
-	private Integer idDetProd;
+	private Long idDetProd;
 
 	@NotNull(message = "¡Este campo es obligatorio!")
-	private Integer clienteId;
+	private Long clienteId;
 
-	@NotBlank(message = "¡Este campo es obligatorio!")
+	private String clienteNombre;
+	
+	private String detProdInfo;
+
 	private String numFactura;
 
 	private LocalDateTime fechaPedido;
@@ -32,8 +35,6 @@ public class PedidoDTO {
 	@Min(value = 1, message = "¡La cantidad debe ser al menos 1!")
 	private Integer cantidad;
 
-	@NotNull(message = "¡Este campo es obligatorio!")
-	@Min(value = 0, message = "¡El total no debe ser negativo!")
 	private BigDecimal total;
 
 	private Estado estadoPedido;

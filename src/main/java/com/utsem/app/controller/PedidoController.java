@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import com.utsem.app.dto.PedidoDTO;
 import com.utsem.app.enums.Estado;
 import com.utsem.app.service.PedidoService;
+import com.utsem.app.service.DetProdService;
+import com.utsem.app.service.ClienteService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -22,6 +24,12 @@ public class PedidoController {
 	@Autowired
 	PedidoService pedidoService;
 
+	@Autowired
+	DetProdService detProdService;
+
+	@Autowired
+	ClienteService clienteService;
+
 	@GetMapping("listar")
 	public String metodoListar(Model model) {
 		model.addAttribute("mensaje", "Listado de Pedidos");
@@ -33,6 +41,8 @@ public class PedidoController {
 	public String metodoNuevo(Model model) {
 		model.addAttribute("pedido", new PedidoDTO());
 		model.addAttribute("estados", Estado.values());
+		model.addAttribute("detalles", detProdService.listarEntidades());
+		model.addAttribute("clientes", clienteService.listarEntidades());
 		return "carpetaPedidos/paginaFormulario";
 	}
 
@@ -41,6 +51,8 @@ public class PedidoController {
 			Model model) {
 		if (result.hasErrors()) {
 			model.addAttribute("estados", Estado.values());
+			model.addAttribute("detalles", detProdService.listarEntidades());
+			model.addAttribute("clientes", clienteService.listarEntidades());
 			return "carpetaPedidos/paginaFormulario";
 		}
 		pedidoService.guardar(pedDto);
@@ -52,6 +64,8 @@ public class PedidoController {
 			Model model) {
 		if (result.hasErrors()) {
 			model.addAttribute("estados", Estado.values());
+			model.addAttribute("detalles", detProdService.listarEntidades());
+			model.addAttribute("clientes", clienteService.listarEntidades());
 			return "carpetaPedidos/paginaFormulario";
 		}
 		pedidoService.actualiza(pedDto);
@@ -62,6 +76,8 @@ public class PedidoController {
 	public String metodoEditar(Model model, @PathVariable UUID uuid) {
 		model.addAttribute("pedido", pedidoService.obtenerPedidoUUID(uuid));
 		model.addAttribute("estados", Estado.values());
+		model.addAttribute("detalles", detProdService.listarEntidades());
+		model.addAttribute("clientes", clienteService.listarEntidades());
 		return "carpetaPedidos/paginaFormulario";
 	}
 

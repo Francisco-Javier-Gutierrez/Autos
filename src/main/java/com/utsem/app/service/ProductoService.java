@@ -54,7 +54,7 @@ public class ProductoService {
 	}
 
 	@Transactional
-	public void borrar2(UUID uuid) {
+	public void borrar(UUID uuid) {
 		Producto p = productoRepo.findByUuid(uuid)
 				.orElseThrow(() -> new EntityNotFoundException("No se encontró el coche"));
 		p.setEstado(Estatus.Discontinuado); // Soft Delete
