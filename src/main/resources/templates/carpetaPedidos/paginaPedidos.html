@@ -18,6 +18,8 @@
 				<tr>
 					<th>Factura</th>
 					<th>Fecha</th>
+					<th>Cliente</th>
+					<th>Vehículo / Detalle</th>
 					<th>Cant.</th>
 					<th>Total</th>
 					<th>Estado</th>
@@ -32,6 +34,8 @@
 				<tr th:each="pedido : ${pedidos}">
 					<td th:text="${pedido.numFactura}"></td>
 					<td th:text="${#temporals.format(pedido.fechaPedido, 'dd-MM-yyyy HH:mm')}"></td>
+					<td th:text="${pedido.clienteNombre}"></td>
+					<td th:text="${pedido.detProdInfo}"></td>
 					<td th:text="${pedido.cantidad}"></td>
 					<td th:text="${pedido.total}"></td>
 					<td th:text="${pedido.estadoPedido}"></td>
