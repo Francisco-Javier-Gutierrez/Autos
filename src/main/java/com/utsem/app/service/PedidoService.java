@@ -157,6 +157,10 @@ public class PedidoService {
 		pedidoRepo.delete(pedidoExistente);
 	}
 
+	public List<Pedido> listarEntidades() {
+		return pedidoRepo.findAll();
+	}
+
 	public PedidoDTO obtenerPedidoUUID(UUID uuid) {
 		Pedido pedido = pedidoRepo.findByUuid(uuid)
 				.orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado con el UUID: " + uuid));

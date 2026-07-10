@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title>Reporte de Ventas por Mes</title>
+	<div th:replace="~{fragmentos :: bootstrap}"></div>
+	<!-- html2pdf.js CDN library -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+	<div th:replace="~{fragmentos :: menu}"></div>
+	
+	<div class="container-fluid mt-4">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h1 class="mb-0">Reporte de Ventas por Mes</h1>
+			<button onclick="exportToPDF()" class="btn btn-danger">📄 Descargar PDF</button>
+		</div>
+
+		<div th:if="${#maps.isEmpty(reporte)}" class="alert alert-warning py-3 text-center">
+			No hay datos de pedidos registrados para generar el reporte de ventas.
+		</div>
+
+		<!-- Elemento contenedor que será exportado a PDF -->
+		<div id="reportContent" class="p-2">
+			<div th:each="entry : ${reporte}" class="mb-5">
+				<div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+					<h3 class="mb-0">
+						📅 Mes: <span class="fw-bold text-primary" th:text="${entry.key}">Enero 2026</span>
+					</h3>
+					<span class="badge bg-success fs-6" 
+					      th:text="'Total Facturado: $' + ${#numbers.formatDecimal(#aggregates.sum(entry.value.![total]), 1, 'COMMA', 2, 'POINT')}">
+						Total Facturado: $0.00
+					</span>
+				</div>
+
+				<table class="table table-bordered table-striped table-sm">
+					<thead class="table-dark">
+						<tr>
+							<th>Factura</th>
+							<th>Fecha</th>
+							<th>Cliente</th>
+							<th>Vehículo / Detalle</th>
+							<th>Cantidad</th>
+							<th>Total</th>
+							<th>Estado</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="pedido : ${entry.value}">
+							<td th:text="${pedido.numFactura}"></td>
+							<td th:text="${#temporals.format(pedido.fechaPedido, 'dd-MM-yyyy HH:mm')}"></td>
+							<td th:text="${pedido.cliente != null ? pedido.cliente.nombre : 'Sin Cliente'}"></td>
+							<td>
+								<span th:if="${pedido.detProd != null && pedido.detProd.producto != null}" 
+								      th:text="${pedido.detProd.producto.marca} + ' ' + ${pedido.detProd.producto.subMarca} + ' ' + ${pedido.detProd.producto.modelo}">
+								</span>
+								<span th:if="${pedido.detProd != null && pedido.detProd.color != null}" 
+								      th:text="' - ' + ${pedido.detProd.color.nombre}">
+								</span>
+							</td>
+							<td class="text-center" th:text="${pedido.cantidad}"></td>
+							<td class="text-end" th:text="${'$' + #numbers.formatDecimal(pedido.total, 1, 'COMMA', 2, 'POINT')}"></td>
+							<td th:text="${pedido.estadoPedido}"></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		function exportToPDF() {
+			const element = document.getElementById('reportContent');
+			
+			// Clonar elemento para aplicar estilos temporales de PDF (márgenes y fuente)
+			const opt = {
+				margin:       0.4,
+				filename:     'Reporte_Ventas_Mensuales.pdf',
+				image:        { type: 'jpeg', quality: 0.98 },
+				html2canvas:  { scale: 2, useCORS: true },
+				jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+			};
+			
+			html2pdf().set(opt).from(element).save();
+		}
+	</script>
+</body>
+</html>
