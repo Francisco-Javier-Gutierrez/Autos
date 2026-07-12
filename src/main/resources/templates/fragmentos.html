@@ -14,7 +14,7 @@
 	<div th:fragment="menu">
 		<nav class="navbar navbar-expand-lg bg-primary" data-bs-theme="dark">
 			<div class="container-fluid">
-				<a class="navbar-brand" href="#">Navbar</a>
+				<a class="navbar-brand" th:href="@{/}">Venta de Autos</a>
 				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarColor01"
 					aria-controls="navbarColor01" aria-expanded="false" aria-label="Toggle navigation">
 					<span class="navbar-toggler-icon"></span>
@@ -22,31 +22,26 @@
 				<div class="collapse navbar-collapse" id="navbarColor01">
 					<ul class="navbar-nav me-auto">
 						<li class="nav-item">
-							<a class="nav-link active" th:href="@{/}">Home
-								<span class="visually-hidden">(current)</span>
-							</a>
+							<a class="nav-link" th:href="@{/rutaPedidos/listar}">Pedidos</a>
 						</li>
 						<li class="nav-item">
-							<a class="nav-link" href="#">Features</a>
+							<a class="nav-link" th:href="@{/rutaColores/listar}">Colores</a>
 						</li>
 						<li class="nav-item">
-							<a class="nav-link" href="#">Pricing</a>
+							<a class="nav-link" th:href="@{/rutaProductos/listar}">Productos</a>
 						</li>
 						<li class="nav-item">
-							<a class="nav-link" href="#">About</a>
+							<a class="nav-link" th:href="@{/rutaDetalles/listar}">Detalle de Productos</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" th:href="@{/rutaClientes/listar}">Clientes</a>
 						</li>
 						<li class="nav-item dropdown">
 							<a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
-								aria-haspopup="true" aria-expanded="false">Catalogos</a>
+								aria-haspopup="true" aria-expanded="false">Reportes</a>
 							<div class="dropdown-menu">
-								<a class="dropdown-item" th:href="@{/rutaPedidos/listar}">Pedidos</a>
-								<a class="dropdown-item" th:href="@{/rutaColores/listar}">Colores</a>
-								<a class="dropdown-item" th:href="@{/rutaProductos/listar}">Productos</a>
-								<a class="dropdown-item" th:href="@{/rutaDetalles/listar}">Detalle de productos</a>
-								<a class="dropdown-item" th:href="@{/rutaClientes/listar}">Clientes</a>
 								<a class="dropdown-item" th:href="@{/rutaReportes/disponibilidad}">Reporte Disponibilidad</a>
 								<a class="dropdown-item" th:href="@{/rutaReportes/ventas-mes}">Reporte Ventas por Mes</a>
-								<div class="dropdown-divider"></div>
 							</div>
 						</li>
 					</ul>
@@ -57,4 +52,30 @@
 				</div>
 			</div>
 		</nav>
+		<script>
+			document.addEventListener("DOMContentLoaded", function () {
+				const currentPath = window.location.pathname;
+				const navLinks = document.querySelectorAll('.nav-link, .dropdown-item');
+				
+				navLinks.forEach(link => link.classList.remove('active'));
+
+				navLinks.forEach(link => {
+					const href = link.getAttribute('href');
+					if (href && href !== '/' && href !== '#') {
+						// Remover '/listar' de la ruta base para que también coincida con '/nuevo', '/editar', etc.
+						const basePath = href.replace('/listar', '');
+						if (currentPath.startsWith(basePath)) {
+							link.classList.add('active');
+							// Marcar también el dropdown padre si es un sub-elemento
+							if (link.classList.contains('dropdown-item')) {
+								const dropdownToggle = link.closest('.dropdown').querySelector('.dropdown-toggle');
+								if (dropdownToggle) {
+									dropdownToggle.classList.add('active');
+								}
+							}
+						}
+					}
+				});
+			});
+		</script>
 	</div>
