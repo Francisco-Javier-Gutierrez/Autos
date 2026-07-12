@@ -28,7 +28,6 @@ public class ColorController {
 
 	@GetMapping("listar")
 	public String metodoListar(Model model) {
-		model.addAttribute("mensaje", "Módulo de gestión de Colores");
 		model.addAttribute("colores", colorService.listar());
 		return "carpetaColores/paginaColores";
 	}

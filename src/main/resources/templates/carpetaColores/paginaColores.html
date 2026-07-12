@@ -19,7 +19,6 @@
 		<table class="table table-bordered table-striped table-sm">
 			<thead class="table-dark">
 				<tr>
-					<th>ID Color</th>
 					<th>Nombre del Color</th>
 					<th>Estado / Disponibilidad</th>
 					<th>Acciones</th>
@@ -27,7 +26,6 @@
 			</thead>
 			<tbody>
 				<tr th:each="col : ${colores}">
-					<td th:text="${col.id}"></td>
 					<td th:text="${col.nombre}"></td>
 					<td th:text="${col.estadoColor}"></td>
 					<td>
@@ -38,7 +36,7 @@
 					</td>
 				</tr>
 				<tr th:if="${#lists.isEmpty(colores)}">
-					<td colspan="4" class="text-center text-muted py-4">No hay colores registrados en el sistema.</td>
+					<td colspan="3" class="text-center text-muted py-4">No hay colores registrados en el sistema.</td>
 				</tr>
 			</tbody>
 		</table>

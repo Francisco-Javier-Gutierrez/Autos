@@ -6,21 +6,22 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class DetProdDTO {
 
-	private Long id;
-
-	private java.util.UUID uuid;
+	private UUID uuid;
 
 	@NotNull(message = "¡Debes seleccionar un producto válido!")
-	private Long productoId;
+	private UUID productoUuid;
 
 	@NotNull(message = "¡El color es obligatorio!")
-	private Long colorId;
+	private UUID colorUuid;
+
+	private String productoNombre;
 
 	private String colorNombre;
 
