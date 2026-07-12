@@ -33,10 +33,11 @@ public class DetProdService {
 				.map(det -> {
 					DetProdDTO dto = mapper.map(det, DetProdDTO.class);
 					if (det.getProducto() != null) {
-						dto.setProductoId(det.getProducto().getId());
+						dto.setProductoUuid(det.getProducto().getUuid());
+						dto.setProductoNombre(det.getProducto().getMarca() + " " + det.getProducto().getSubMarca() + " " + det.getProducto().getModelo());
 					}
 					if (det.getColor() != null) {
-						dto.setColorId(det.getColor().getId());
+						dto.setColorUuid(det.getColor().getUuid());
 						dto.setColorNombre(det.getColor().getNombre());
 					}
 					return dto;
@@ -49,15 +50,15 @@ public class DetProdService {
 		det.setStock(detProdDTO.getStock());
 		det.setTransmision(detProdDTO.getTransmision());
 		
-		if (detProdDTO.getProductoId() != null) {
-			Producto producto = productoRepo.findById(detProdDTO.getProductoId())
-					.orElseThrow(() -> new EntityNotFoundException("Producto no encontrado con ID: " + detProdDTO.getProductoId()));
+		if (detProdDTO.getProductoUuid() != null) {
+			Producto producto = productoRepo.findByUuid(detProdDTO.getProductoUuid())
+					.orElseThrow(() -> new EntityNotFoundException("Producto no encontrado con UUID: " + detProdDTO.getProductoUuid()));
 			det.setProducto(producto);
 		}
 		
-		if (detProdDTO.getColorId() != null) {
-			Color color = colorRepo.findById(detProdDTO.getColorId())
-					.orElseThrow(() -> new EntityNotFoundException("Color no encontrado con ID: " + detProdDTO.getColorId()));
+		if (detProdDTO.getColorUuid() != null) {
+			Color color = colorRepo.findByUuid(detProdDTO.getColorUuid())
+					.orElseThrow(() -> new EntityNotFoundException("Color no encontrado con UUID: " + detProdDTO.getColorUuid()));
 			det.setColor(color);
 		}
 		
@@ -71,17 +72,17 @@ public class DetProdService {
 		existente.setStock(detProdDTO.getStock());
 		existente.setTransmision(detProdDTO.getTransmision());
 		
-		if (detProdDTO.getProductoId() != null) {
-			Producto producto = productoRepo.findById(detProdDTO.getProductoId())
-					.orElseThrow(() -> new EntityNotFoundException("Producto no encontrado con ID: " + detProdDTO.getProductoId()));
+		if (detProdDTO.getProductoUuid() != null) {
+			Producto producto = productoRepo.findByUuid(detProdDTO.getProductoUuid())
+					.orElseThrow(() -> new EntityNotFoundException("Producto no encontrado con UUID: " + detProdDTO.getProductoUuid()));
 			existente.setProducto(producto);
 		} else {
 			existente.setProducto(null);
 		}
 		
-		if (detProdDTO.getColorId() != null) {
-			Color color = colorRepo.findById(detProdDTO.getColorId())
-					.orElseThrow(() -> new EntityNotFoundException("Color no encontrado con ID: " + detProdDTO.getColorId()));
+		if (detProdDTO.getColorUuid() != null) {
+			Color color = colorRepo.findByUuid(detProdDTO.getColorUuid())
+					.orElseThrow(() -> new EntityNotFoundException("Color no encontrado con UUID: " + detProdDTO.getColorUuid()));
 			existente.setColor(color);
 		} else {
 			existente.setColor(null);
@@ -95,10 +96,11 @@ public class DetProdService {
 				.orElseThrow(() -> new EntityNotFoundException("Inventario no encontrado"));
 		DetProdDTO dto = mapper.map(det, DetProdDTO.class);
 		if (det.getProducto() != null) {
-			dto.setProductoId(det.getProducto().getId());
+			dto.setProductoUuid(det.getProducto().getUuid());
+			dto.setProductoNombre(det.getProducto().getMarca() + " " + det.getProducto().getSubMarca() + " " + det.getProducto().getModelo());
 		}
 		if (det.getColor() != null) {
-			dto.setColorId(det.getColor().getId());
+			dto.setColorUuid(det.getColor().getUuid());
 			dto.setColorNombre(det.getColor().getNombre());
 		}
 		return dto;

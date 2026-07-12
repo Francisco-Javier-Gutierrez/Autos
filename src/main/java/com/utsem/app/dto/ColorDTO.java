@@ -11,9 +11,7 @@ import lombok.Data;
 
 @Data
 public class ColorDTO {
-	
-		private Long id;
-	
+
 	@NotBlank(message = "Este campo es obligatorio")
 	@Size(max = 50, message = "El nombre del color no debe superar los 50 caracteres")
 	private String nombre;
