@@ -26,21 +26,25 @@
 					<h3 class="mb-3">🚗 Autos Disponibles</h3>
 					
 					<!-- Campo select oculto para enlazar con Thymeleaf -->
-					<select id="selectVehiculo" class="d-none" th:field="*{idDetProd}">
+					<select id="selectVehiculo" class="d-none" th:field="*{detProdUuid}">
 						<option value="">--- Selecciona un Vehículo ---</option>
 						<option th:each="det : ${detalles}" 
-						        th:value="${det.id}" 
+						        th:value="${det.uuid}" 
 						        th:data-precio="${det.producto.precio}"
+						        th:data-stock="${det.stock}"
 						        th:text="(${det.producto != null} ? ${det.producto.marca} + ' ' + ${det.producto.subMarca} + ' ' + ${det.producto.modelo} : '')">
 						</option>
 					</select>
-					<div class="text-danger mb-3" th:if="${#fields.hasErrors('idDetProd')}" th:errors="*{idDetProd}">Error</div>
+					<div class="text-danger mb-3" th:if="${#fields.hasErrors('detProdUuid')}" th:errors="*{detProdUuid}">Error</div>
 
 					<div class="row row-cols-1 row-cols-md-3 g-3">
 						<div class="col" th:each="det : ${detalles}">
 							<div class="card h-100 car-card" 
-							     th:id="'car-card-' + ${det.id}"
-							     th:onclick="'selectCar(' + ${det.id} + ', ' + ${det.producto.precio} + ')'"
+							     th:id="'car-card-' + ${det.uuid}"
+							     th:data-uuid="${det.uuid}"
+							     th:data-precio="${det.producto.precio}"
+							     th:data-stock="${det.stock}"
+							     onclick="selectCar(this.getAttribute('data-uuid'), parseFloat(this.getAttribute('data-precio')), parseInt(this.getAttribute('data-stock')))"
 							     style="cursor: pointer; transition: all 0.2s ease-in-out;">
 								<div class="card-body">
 									<h5 class="card-title fw-bold" th:text="${det.producto.marca} + ' ' + ${det.producto.subMarca} + ' ' + ${det.producto.modelo}">Auto</h5>
@@ -56,7 +60,7 @@
 									<p class="card-text mb-1">
 										<strong>Stock:</strong> 
 										<span class="badge text-dark" th:classappend="${det.stock == 0 ? 'bg-danger' : 'bg-success'}" 
-										      th:text="${det.stock}">0</span>
+ 										      th:text="${det.stock}">0</span>
 									</p>
 									<p class="card-text mb-0 mt-2 fs-5 fw-bold text-primary" 
 									   th:text="${'$' + #numbers.formatDecimal(det.producto.precio, 1, 'COMMA', 2, 'POINT')}">
@@ -74,14 +78,14 @@
 
 					<div class="mb-3">
 						<label class="form-label fw-bold">Cliente:</label>
-						<select class="form-select" th:field="*{clienteId}">
+						<select class="form-select" th:field="*{clienteUuid}">
 							<option value="">--- Selecciona un Cliente ---</option>
 							<option th:each="cli : ${clientes}" 
-							        th:value="${cli.id}" 
+							        th:value="${cli.uuid}" 
 							        th:text="${cli.nombre} + ' (' + ${cli.correo} + ')'">
 							</option>
 						</select>
-						<div class="text-danger" th:if="${#fields.hasErrors('clienteId')}" th:errors="*{clienteId}">Error</div>
+						<div class="text-danger" th:if="${#fields.hasErrors('clienteUuid')}" th:errors="*{clienteUuid}">Error</div>
 					</div>
 
 					<div class="mb-3">
@@ -146,13 +150,33 @@
 		</form>
 	</div>
 
-	<script>
-		let selectedPrice = 0;
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		const originalUuid = /*[[${pedido.detProdUuid}]]*/ null;
+		const originalCantidad = /*[[${pedido.cantidad != null ? pedido.cantidad : 0}]]*/ 0;
+		/*]]>*/
 
-		function selectCar(id, price) {
+		let selectedPrice = 0;
+		let selectedStock = 0;
+
+		function selectCar(uuid, price, stock) {
 			// Actualizar el select oculto
-			document.getElementById('selectVehiculo').value = id;
+			document.getElementById('selectVehiculo').value = uuid;
 			selectedPrice = price;
+			selectedStock = stock;
+
+			// Actualizar límite de cantidad
+			const inputCantidad = document.getElementById('inputCantidad');
+			let maxLimit = stock;
+			if (originalUuid && originalUuid === uuid) {
+				maxLimit = stock + originalCantidad;
+			}
+			inputCantidad.max = maxLimit;
+			inputCantidad.min = 1;
+			
+			if (parseInt(inputCantidad.value) > maxLimit) {
+				inputCantidad.value = maxLimit;
+			}
 
 			// Quitar clase activa de todas las tarjetas
 			document.querySelectorAll('.car-card').forEach(card => {
@@ -160,7 +184,7 @@
 			});
 
 			// Agregar clase activa a la tarjeta seleccionada
-			const selectedCard = document.getElementById('car-card-' + id);
+			const selectedCard = document.getElementById('car-card-' + uuid);
 			if (selectedCard) {
 				selectedCard.classList.add('border-primary', 'bg-light', 'shadow');
 			}
@@ -177,12 +201,15 @@
 
 		// Al cargar la página, si ya hay un vehículo seleccionado (por ejemplo en edición)
 		window.addEventListener('DOMContentLoaded', () => {
-			const selectedId = document.getElementById('selectVehiculo').value;
-			if (selectedId) {
+			const selectedUuid = document.getElementById('selectVehiculo').value;
+			if (selectedUuid) {
 				const selectEl = document.getElementById('selectVehiculo');
 				const selectedOption = selectEl.options[selectEl.selectedIndex];
-				const price = parseFloat(selectedOption.getAttribute('data-precio')) || 0;
-				selectCar(selectedId, price);
+				if (selectedOption) {
+					const price = parseFloat(selectedOption.getAttribute('data-precio')) || 0;
+					const stock = parseInt(selectedOption.getAttribute('data-stock')) || 0;
+					selectCar(selectedUuid, price, stock);
+				}
 			}
 		});
 	</script>
