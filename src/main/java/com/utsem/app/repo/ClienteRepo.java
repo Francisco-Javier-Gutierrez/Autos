@@ -9,4 +9,5 @@ import java.util.UUID;
 @Repository
 public interface ClienteRepo extends JpaRepository<Cliente, Long> {
 	Optional<Cliente> findByUuid(UUID uuid);
+	Optional<Cliente> findByCorreo(String correo);
 }

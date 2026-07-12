@@ -30,12 +30,14 @@ public class ClienteController {
 	@GetMapping("nuevo")
 	public String metodoNuevo(Model model) {
 		model.addAttribute("cliente", new ClienteDTO());
+		model.addAttribute("estatusList", com.utsem.app.enums.EstatusCliente.values());
 		return "carpetaClientes/paginaFormulario";
 	}
 
 	@PostMapping("guardar")
 	public String metodoGuarda(@Valid @ModelAttribute("cliente") ClienteDTO clienteDto, BindingResult result, Model model) {
 		if (result.hasErrors()) {
+			model.addAttribute("estatusList", com.utsem.app.enums.EstatusCliente.values());
 			return "carpetaClientes/paginaFormulario";
 		}
 		clienteService.guardar(clienteDto);
@@ -45,6 +47,7 @@ public class ClienteController {
 	@PostMapping("actualizar")
 	public String metodoActualiza(@Valid @ModelAttribute("cliente") ClienteDTO clienteDto, BindingResult result, Model model) {
 		if (result.hasErrors()) {
+			model.addAttribute("estatusList", com.utsem.app.enums.EstatusCliente.values());
 			return "carpetaClientes/paginaFormulario";
 		}
 		clienteService.actualiza(clienteDto);
@@ -54,6 +57,7 @@ public class ClienteController {
 	@GetMapping("editar/{uuid}")
 	public String metodoEditar(Model model, @PathVariable UUID uuid) {
 		model.addAttribute("cliente", clienteService.obtenerClienteUUID(uuid));
+		model.addAttribute("estatusList", com.utsem.app.enums.EstatusCliente.values());
 		return "carpetaClientes/paginaFormulario";
 	}
 
