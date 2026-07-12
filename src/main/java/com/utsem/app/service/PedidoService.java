@@ -11,6 +11,7 @@ import com.utsem.app.model.Pedido;
 import com.utsem.app.model.Cliente;
 import com.utsem.app.model.DetProd;
 import com.utsem.app.repo.PedidoRepo;
+import com.utsem.app.repo.ProductoRepo;
 import com.utsem.app.repo.ClienteRepo;
 import com.utsem.app.repo.DetProdRepo;
 import jakarta.persistence.EntityNotFoundException;
@@ -33,7 +34,7 @@ public class PedidoService {
 	ClienteRepo clienteRepo;
 
 	@Autowired
-	com.utsem.app.repo.ProductoRepo productoRepo;
+	ProductoRepo productoRepo;
 
 	@Autowired
 	ModelMapper mapper;
