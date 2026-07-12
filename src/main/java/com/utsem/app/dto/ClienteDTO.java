@@ -23,4 +23,6 @@ public class ClienteDTO {
 
 	@NotBlank(message = "¡El teléfono es obligatorio!")
 	private String telefono;
+
+	private com.utsem.app.enums.EstatusCliente estatus;
 }
