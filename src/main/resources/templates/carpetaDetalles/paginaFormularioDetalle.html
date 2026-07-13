@@ -14,7 +14,6 @@
 		<form th:action="${detalle.uuid} == null ? @{/rutaDetalles/guardar} : @{/rutaDetalles/actualizar}" 
 			  method="post" th:object="${detalle}">
 
-			<input type="hidden" th:field="*{id}" />
 			<input type="hidden" th:field="*{uuid}" />
 
 			<div class="mb-3">
