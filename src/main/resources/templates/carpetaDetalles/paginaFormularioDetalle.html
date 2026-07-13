@@ -14,35 +14,34 @@
 		<form th:action="${detalle.uuid} == null ? @{/rutaDetalles/guardar} : @{/rutaDetalles/actualizar}" 
 			  method="post" th:object="${detalle}">
 
-			<input type="hidden" th:field="*{id}" />
 			<input type="hidden" th:field="*{uuid}" />
 
 			<div class="mb-3">
 				<label class="form-label fw-bold">Seleccionar Vehículo (Información Completa):</label>
-				<select class="form-select" th:field="*{productoId}">
+				<select class="form-select" th:field="*{productoUuid}">
 					<option value="">--- Selecciona un Auto de la Lista ---</option>
 					<option th:each="pro : ${productos}" 
-					        th:value="${pro.id}" 
+					        th:value="${pro.uuid}" 
 					        th:text="${pro.marca} + ' ' + ${pro.subMarca} + ' ' + ${pro.modelo} + ' ' + 
 					                 '(' + ${pro.anio} + ') — ' + 
 					                 '$' + ${pro.precio} + ' | ' + 
 					                 'Estado: ' + ${pro.estado}">
 					</option>
 				</select>
-				<div class="text-danger" th:if="${#fields.hasErrors('productoId')}" th:errors="*{productoId}">Error</div>
+				<div class="text-danger" th:if="${#fields.hasErrors('productoUuid')}" th:errors="*{productoUuid}">Error</div>
 			</div>
 
 			<div class="row">
 				<div class="col-md-6 mb-3">
 					<label class="form-label fw-bold">Color:</label>
-					<select class="form-select" th:field="*{colorId}">
+					<select class="form-select" th:field="*{colorUuid}">
 						<option value="">--- Selecciona un Color ---</option>
 						<option th:each="col : ${colores}" 
-						        th:value="${col.id}" 
+						        th:value="${col.uuid}" 
 						        th:text="${col.nombre}">
 						</option>
 					</select>
-					<div class="text-danger" th:if="${#fields.hasErrors('colorId')}" th:errors="*{colorId}">Error</div>
+					<div class="text-danger" th:if="${#fields.hasErrors('colorUuid')}" th:errors="*{colorUuid}">Error</div>
 				</div>
 
 				<div class="col-md-6 mb-3">

@@ -3,7 +3,10 @@ package com.utsem.app.enums;
 public enum Estatus {
 	Disponible,
 	Agotado,
-	Discontinuado,
+	Descontinuado,
 	En_Transito,
-	Reservado
+	Reservado,
+	En_Mantenimiento,
+	En_Exhibicion,
+	Vendido
 }

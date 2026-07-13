@@ -7,8 +7,10 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.utsem.app.dto.ClienteDTO;
+import com.utsem.app.enums.EstatusCliente;
 import com.utsem.app.model.Cliente;
 import com.utsem.app.repo.ClienteRepo;
+
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
@@ -54,7 +56,8 @@ public class ClienteService {
 	public void borrar(UUID uuid) {
 		Cliente c = clienteRepo.findByUuid(uuid)
 				.orElseThrow(() -> new EntityNotFoundException("No se encontró el cliente"));
-		clienteRepo.delete(c);
+		c.setEstatus(EstatusCliente.Eliminado);
+		clienteRepo.save(c);
 	}
 	
 	public List<Cliente> listarEntidades() {

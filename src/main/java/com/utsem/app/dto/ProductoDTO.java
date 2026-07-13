@@ -41,13 +41,13 @@ public class ProductoDTO {
 
 	@NotNull(message = "¡La valoraciòn es obligatoria!")
 	private Integer valoracionRubiFA;
-	
+
 	@NotNull(message = "¡Lo favorito es obligatorio!")
 	private Boolean favoritoPerlaMM;
-	
+
 	@NotNull(message = "¡La reseña es obligatoria!")
 	private String resenaFrancelyAnaidGH;
-	
+
 	@NotNull(message = "¡El  nivel de interes es obligatorio!")
 	private Integer nivelInteresFranciscoJavierGH;
 }

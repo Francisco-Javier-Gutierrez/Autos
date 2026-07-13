@@ -3,6 +3,7 @@ package com.utsem.app.model;
 import java.util.UUID;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,6 +35,10 @@ public class Cliente {
 
 	@Column(length = 20, nullable = false)
 	private String telefono;
+
+	@Enumerated(jakarta.persistence.EnumType.STRING)
+	@Column(length = 30, nullable = false)
+	private com.utsem.app.enums.EstatusCliente estatus = com.utsem.app.enums.EstatusCliente.Activo;
 
 	@PrePersist
 	private void inicializarUuid() {

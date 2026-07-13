@@ -18,10 +18,10 @@ import lombok.AllArgsConstructor;
 public class PedidoDTO {
 
 	@NotNull(message = "¡Este campo es obligatorio!")
-	private Long idDetProd;
+	private UUID detProdUuid;
 
 	@NotNull(message = "¡Este campo es obligatorio!")
-	private Long clienteId;
+	private UUID clienteUuid;
 
 	private String clienteNombre;
 	

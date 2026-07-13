@@ -11,16 +11,14 @@
 	<div class="container-fluid mt-4">
 		<h1 class="mb-4">Lista de Colores Registrados</h1>
 		
-		<button type="button" class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#modalColor">
-			➕ Nuevo Color
-		</button>
+		<a th:href="@{/rutaColores/nuevo}" class="btn btn-primary mb-3">➕ Nuevo Color</a>
 
-		<div class="alert alert-info py-2" th:if="${mensaje}" th:text="${mensaje}"></div>
+		<div class="alert alert-success py-2" th:if="${mensaje}" th:text="${mensaje}"></div>
+		<div class="alert alert-danger py-2" th:if="${mensajeError}" th:text="${mensajeError}"></div>
 
 		<table class="table table-bordered table-striped table-sm">
 			<thead class="table-dark">
 				<tr>
-					<th>ID Color</th>
 					<th>Nombre del Color</th>
 					<th>Estado / Disponibilidad</th>
 					<th>Acciones</th>
@@ -28,7 +26,6 @@
 			</thead>
 			<tbody>
 				<tr th:each="col : ${colores}">
-					<td th:text="${col.id}"></td>
 					<td th:text="${col.nombre}"></td>
 					<td th:text="${col.estadoColor}"></td>
 					<td>
@@ -39,61 +36,10 @@
 					</td>
 				</tr>
 				<tr th:if="${#lists.isEmpty(colores)}">
-					<td colspan="4" class="text-center text-muted py-4">No hay colores registrados en el sistema.</td>
+					<td colspan="3" class="text-center text-muted py-4">No hay colores registrados en el sistema.</td>
 				</tr>
 			</tbody>
 		</table>
-
-		<!-- Modal for Creating/Editing Colors -->
-		<div class="modal fade" id="modalColor" data-bs-backdrop="static" tabindex="-1" aria-labelledby="modalColorLabel" aria-hidden="true">
-			<div class="modal-dialog modal-dialog-centered modal-lg">
-				<div class="modal-content">
-					
-					<div class="modal-header">
-						<h5 class="modal-title fw-bold" id="modalColorLabel">
-							<span th:text="${color.uuid} != null ? '✏️ Editar Color Seleccionado' : '📦 Registrar Color Nuevo'"></span>
-						</h5>
-						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-					</div>
-					
-					<form th:action="${color.uuid} == null ? @{/rutaColores/guardar} : @{/rutaColores/actualizar}" method="post" th:object="${color}">
-						<div class="modal-body">
-							<input type="hidden" th:field="*{uuid}" />
-							<input type="hidden" th:field="*{id}" />
-
-							<div class="mb-3">
-								<label class="form-label fw-bold">Nombre del Color:</label>
-								<input type="text" class="form-control" th:field="*{nombre}" placeholder="Ej. Rojo, Verde Mar..." />
-								<div class="text-danger" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}">Error</div>
-							</div>
-							
-							<div class="mb-3">
-								<label class="form-label fw-bold">Estado:</label>
-								<select class="form-select" th:field="*{estadoColor}">
-									<option value="" disabled selected>-- Selecciona un Estado --</option>
-									<option th:each="estado : ${estados}" th:value="${estado}" th:text="${estado}"></option>
-								</select>
-								<div class="text-danger" th:if="${#fields.hasErrors('estadoColor')}" th:errors="*{estadoColor}">Error</div>
-							</div>
-						</div>
-						
-						<div class="modal-footer">
-							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-							<button type="submit" class="btn btn-success">Guardar</button>
-						</div>
-					</form>
-					
-				</div>
-			</div>
-		</div>
-
 	</div>
-
-	<script th:if="${color.uuid != null or #fields.hasErrors('${color.*}')}">
-		window.addEventListener('DOMContentLoaded', () => {
-			const miModal = new bootstrap.Modal(document.getElementById('modalColor'));
-			miModal.show();
-		});
-	</script>
 </body>
 </html>

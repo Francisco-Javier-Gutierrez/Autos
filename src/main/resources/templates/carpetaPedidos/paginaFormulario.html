@@ -1,103 +1,217 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-
 <head>
+	<meta charset="UTF-8">
 	<title th:text="${pedido.uuid} != null ? 'Editar Pedido' : 'Nuevo Pedido'"></title>
 	<div th:replace="~{fragmentos :: bootstrap}"></div>
+	<style>
+		.car-card:hover {
+			transform: scale(1.02);
+			box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+		}
+	</style>
 </head>
-
 <body>
 	<div th:replace="~{fragmentos :: menu}"></div>
 
-	<h1 th:text="${pedido.uuid} != null ? 'Editar Pedido' : 'Nuevo Pedido'" class="mb-4"></h1>
+	<div class="container-fluid mt-4">
+		<h1 th:text="${pedido.uuid} != null ? 'Editar Pedido' : 'Nuevo Pedido'" class="mb-4"></h1>
 
-	<form th:action="${pedido.uuid} == null ? @{/rutaPedidos/guardar} : @{/rutaPedidos/actualizar}" method="post"
-		th:object="${pedido}">
+		<form th:action="${pedido.uuid} == null ? @{/rutaPedidos/guardar} : @{/rutaPedidos/actualizar}" method="post" th:object="${pedido}">
+			<input type="hidden" th:field="*{uuid}" />
 
-		<input type="hidden" th:field="*{uuid}" />
+			<div class="row">
+				<!-- Panel de Autos Disponibles (75% de ancho) -->
+				<div class="col-md-9 border-end">
+					<h3 class="mb-3">🚗 Autos Disponibles</h3>
+					
+					<!-- Campo select oculto para enlazar con Thymeleaf -->
+					<select id="selectVehiculo" class="d-none" th:field="*{detProdUuid}">
+						<option value="">--- Selecciona un Vehículo ---</option>
+						<option th:each="det : ${detalles}" 
+						        th:value="${det.uuid}" 
+						        th:data-precio="${det.producto.precio}"
+						        th:data-stock="${det.stock}"
+						        th:text="(${det.producto != null} ? ${det.producto.marca} + ' ' + ${det.producto.subMarca} + ' ' + ${det.producto.modelo} : '')">
+						</option>
+					</select>
+					<div class="text-danger mb-3" th:if="${#fields.hasErrors('detProdUuid')}" th:errors="*{detProdUuid}">Error</div>
 
-		<div class="mb-3">
-			<label class="form-label fw-bold">Vehículo / Detalle de Inventario:</label>
-			<select class="form-select" th:field="*{idDetProd}">
-				<option value="">--- Selecciona un Vehículo ---</option>
-				<option th:each="det : ${detalles}" 
-				        th:value="${det.id}" 
-				        th:text="(${det.producto != null} ? ${det.producto.marca} + ' ' + ${det.producto.subMarca} + ' ' + ${det.producto.modelo} + ' (' + ${det.producto.anio} + ')' : 'Sin Auto') + 
-				                 ' — ' + (${det.color != null} ? ${det.color.nombre} : 'Sin Color') + 
-				                 ' — Stock: ' + ${det.stock} + ' | Transmisión: ' + ${det.transmision}">
-				</option>
-			</select>
-			<div class="text-danger" th:if="${#fields.hasErrors('idDetProd')}" th:errors="*{idDetProd}">Error</div>
-		</div>
+					<div class="row row-cols-1 row-cols-md-3 g-3">
+						<div class="col" th:each="det : ${detalles}">
+							<div class="card h-100 car-card" 
+							     th:id="'car-card-' + ${det.uuid}"
+							     th:data-uuid="${det.uuid}"
+							     th:data-precio="${det.producto.precio}"
+							     th:data-stock="${det.stock}"
+							     onclick="selectCar(this.getAttribute('data-uuid'), parseFloat(this.getAttribute('data-precio')), parseInt(this.getAttribute('data-stock')))"
+							     style="cursor: pointer; transition: all 0.2s ease-in-out;">
+								<div class="card-body">
+									<h5 class="card-title fw-bold" th:text="${det.producto.marca} + ' ' + ${det.producto.subMarca} + ' ' + ${det.producto.modelo}">Auto</h5>
+									<p class="card-text mb-1">
+										<strong>Año:</strong> <span th:text="${det.producto.anio}"></span>
+									</p>
+									<p class="card-text mb-1">
+										<strong>Transmisión:</strong> <span th:text="${det.transmision}"></span>
+									</p>
+									<p class="card-text mb-1">
+										<strong>Color:</strong> <span th:text="${det.color.nombre}"></span>
+									</p>
+									<p class="card-text mb-1">
+										<strong>Stock:</strong> 
+										<span class="badge text-dark" th:classappend="${det.stock == 0 ? 'bg-danger' : 'bg-success'}" 
+ 										      th:text="${det.stock}">0</span>
+									</p>
+									<p class="card-text mb-0 mt-2 fs-5 fw-bold text-primary" 
+									   th:text="${'$' + #numbers.formatDecimal(det.producto.precio, 1, 'COMMA', 2, 'POINT')}">
+										$0.00
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 
-		<div class="mb-3">
-			<label class="form-label fw-bold">Cliente:</label>
-			<select class="form-select" th:field="*{clienteId}">
-				<option value="">--- Selecciona un Cliente ---</option>
-				<option th:each="cli : ${clientes}" 
-				        th:value="${cli.id}" 
-				        th:text="${cli.nombre} + ' (' + ${cli.correo} + ')'">
-				</option>
-			</select>
-			<div class="text-danger" th:if="${#fields.hasErrors('clienteId')}" th:errors="*{clienteId}">Error</div>
-		</div>
+				<!-- Panel del Total y Datos del Pedido (25% de ancho) -->
+				<div class="col-md-3">
+					<h3 class="mb-3">📋 Datos del Pedido</h3>
 
-		<div class="mb-3">
-			<label class="form-label fw-bold">Número de Factura:</label>
-			<input type="text" class="form-control" th:field="*{numFactura}" readonly placeholder="Se generará automáticamente al guardar" />
-		</div>
+					<div class="mb-3">
+						<label class="form-label fw-bold">Cliente:</label>
+						<select class="form-select" th:field="*{clienteUuid}">
+							<option value="">--- Selecciona un Cliente ---</option>
+							<option th:each="cli : ${clientes}" 
+							        th:value="${cli.uuid}" 
+							        th:text="${cli.nombre} + ' (' + ${cli.correo} + ')'">
+							</option>
+						</select>
+						<div class="text-danger" th:if="${#fields.hasErrors('clienteUuid')}" th:errors="*{clienteUuid}">Error</div>
+					</div>
 
-		<div class="mb-3">
-			<label class="form-label fw-bold">Cantidad:</label>
-			<input type="number" step="1" class="form-control" th:field="*{cantidad}" placeholder="Ej. 1" />
-			<div class="text-danger" th:if="${#fields.hasErrors('cantidad')}" th:errors="*{cantidad}">Error</div>
-		</div>
+					<div class="mb-3">
+						<label class="form-label fw-bold">Cantidad:</label>
+						<input type="number" id="inputCantidad" step="1" class="form-control" th:field="*{cantidad}" placeholder="Ej. 1" oninput="updateTotal()" />
+						<div class="text-danger" th:if="${#fields.hasErrors('cantidad')}" th:errors="*{cantidad}">Error</div>
+					</div>
 
-		<div class="mb-3">
-			<label class="form-label fw-bold">Total ($):</label>
-			<input type="text" class="form-control" th:field="*{total}" readonly placeholder="Se calculará automáticamente al guardar" />
-		</div>
+					<div class="mb-3">
+						<label class="form-label fw-bold">Número de Factura:</label>
+						<input type="text" class="form-control bg-light" th:field="*{numFactura}" readonly placeholder="Generado al guardar" />
+					</div>
 
-		<div class="mb-3">
-			<label class="form-label">Estatus:</label>
-			<select class="form-control" th:field="*{estadoPedido}">
-				<option th:each="estado : ${estados}" th:value="${estado}" th:text="${estado}">
-				</option>
-			</select>
-		</div>
+					<div class="mb-3">
+						<label class="form-label fw-bold">Total Estimado ($):</label>
+						<input type="text" id="displayTotal" class="form-control bg-light fs-4 fw-bold text-success" th:field="*{total}" readonly placeholder="$0.00" />
+					</div>
 
-		<div class="mb-3">
-			<label class="form-label">Valoración (Rubi FA):</label>
-			<input type="number" min="1" max="5" class="form-control" th:field="*{valoracionRubiFA}" />
-			<div class="text-danger" th:if="${#fields.hasErrors('valoracionRubiFA')}" th:errors="*{valoracionRubiFA}">Error</div>
-		</div>
+					<div class="mb-3">
+						<label class="form-label">Estatus:</label>
+						<select class="form-select" th:field="*{estadoPedido}">
+							<option th:each="estado : ${estados}" th:value="${estado}" th:text="${estado}"></option>
+						</select>
+					</div>
 
-		<div class="mb-3">
-			<label class="form-label">Favorito (Perla MM):</label>
-			<select class="form-control" th:field="*{favoritoPerlaMM}">
-				<option th:value="true">Sí</option>
-				<option th:value="false">No</option>
-			</select>
-		</div>
+					<div class="mb-3">
+						<label class="form-label">Valoración (Rubi FA):</label>
+						<input type="number" min="1" max="5" class="form-control" th:field="*{valoracionRubiFA}" />
+						<div class="text-danger" th:if="${#fields.hasErrors('valoracionRubiFA')}" th:errors="*{valoracionRubiFA}">Error</div>
+					</div>
 
-		<div class="mb-3">
-			<label class="form-label">Reseña (Francely Anaid GH):</label>
-			<input type="text" class="form-control" th:field="*{resenaFrancelyAnaidGH}" />
-		</div>
+					<div class="mb-3">
+						<label class="form-label">Favorito (Perla MM):</label>
+						<select class="form-select" th:field="*{favoritoPerlaMM}">
+							<option th:value="true">Sí</option>
+							<option th:value="false">No</option>
+						</select>
+					</div>
 
-		<div class="mb-3">
-			<label class="form-label">Nivel de Interés (Francisco Javier GH):</label>
-			<select class="form-control" th:field="*{nivelInteresFranciscoJavierGH}">
-				<option value="1">Bajo</option>
-				<option value="2">Medio</option>
-				<option value="3">Alto</option>
-			</select>
-			<div class="text-danger" th:if="${#fields.hasErrors('nivelInteresFranciscoJavierGH')}" th:errors="*{nivelInteresFranciscoJavierGH}">Error</div>
-		</div>
+					<div class="mb-3">
+						<label class="form-label">Reseña (Francely Anaid GH):</label>
+						<input type="text" class="form-control" th:field="*{resenaFrancelyAnaidGH}" />
+					</div>
 
-		<button type="submit" class="btn btn-success">Guardar</button>
-		<a th:href="@{/rutaPedidos/listar}" class="btn btn-secondary">Cancelar</a>
-	</form>
+					<div class="mb-3">
+						<label class="form-label">Nivel de Interés (Francisco Javier GH):</label>
+						<select class="form-select" th:field="*{nivelInteresFranciscoJavierGH}">
+							<option value="1">Bajo</option>
+							<option value="2">Medio</option>
+							<option value="3">Alto</option>
+						</select>
+						<div class="text-danger" th:if="${#fields.hasErrors('nivelInteresFranciscoJavierGH')}" th:errors="*{nivelInteresFranciscoJavierGH}">Error</div>
+					</div>
+
+					<hr>
+					<div class="d-grid gap-2">
+						<button type="submit" class="btn btn-success btn-lg">Guardar Pedido</button>
+						<a th:href="@{/rutaPedidos/listar}" class="btn btn-secondary">Cancelar</a>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		const originalUuid = /*[[${pedido.detProdUuid}]]*/ null;
+		const originalCantidad = /*[[${pedido.cantidad != null ? pedido.cantidad : 0}]]*/ 0;
+		/*]]>*/
+
+		let selectedPrice = 0;
+		let selectedStock = 0;
+
+		function selectCar(uuid, price, stock) {
+			// Actualizar el select oculto
+			document.getElementById('selectVehiculo').value = uuid;
+			selectedPrice = price;
+			selectedStock = stock;
+
+			// Actualizar límite de cantidad
+			const inputCantidad = document.getElementById('inputCantidad');
+			let maxLimit = stock;
+			if (originalUuid && originalUuid === uuid) {
+				maxLimit = stock + originalCantidad;
+			}
+			inputCantidad.max = maxLimit;
+			inputCantidad.min = 1;
+			
+			if (parseInt(inputCantidad.value) > maxLimit) {
+				inputCantidad.value = maxLimit;
+			}
+
+			// Quitar clase activa de todas las tarjetas
+			document.querySelectorAll('.car-card').forEach(card => {
+				card.classList.remove('border-primary', 'bg-light', 'shadow');
+			});
+
+			// Agregar clase activa a la tarjeta seleccionada
+			const selectedCard = document.getElementById('car-card-' + uuid);
+			if (selectedCard) {
+				selectedCard.classList.add('border-primary', 'bg-light', 'shadow');
+			}
+
+			// Actualizar total
+			updateTotal();
+		}
+
+		function updateTotal() {
+			const cantidad = parseInt(document.getElementById('inputCantidad').value) || 0;
+			const total = cantidad * selectedPrice;
+			document.getElementById('displayTotal').value = total.toFixed(2);
+		}
+
+		// Al cargar la página, si ya hay un vehículo seleccionado (por ejemplo en edición)
+		window.addEventListener('DOMContentLoaded', () => {
+			const selectedUuid = document.getElementById('selectVehiculo').value;
+			if (selectedUuid) {
+				const selectEl = document.getElementById('selectVehiculo');
+				const selectedOption = selectEl.options[selectEl.selectedIndex];
+				if (selectedOption) {
+					const price = parseFloat(selectedOption.getAttribute('data-precio')) || 0;
+					const stock = parseInt(selectedOption.getAttribute('data-stock')) || 0;
+					selectCar(selectedUuid, price, stock);
+				}
+			}
+		});
+	</script>
 </body>
-
 </html>

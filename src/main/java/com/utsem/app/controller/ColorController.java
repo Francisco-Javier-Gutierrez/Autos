@@ -28,10 +28,7 @@ public class ColorController {
 
 	@GetMapping("listar")
 	public String metodoListar(Model model) {
-		model.addAttribute("mensaje", "Módulo de gestión de Colores");
-		model.addAttribute("color", new ColorDTO()); 
 		model.addAttribute("colores", colorService.listar());
-		model.addAttribute("estados", EstadoColor.values());
 		return "carpetaColores/paginaColores";
 	}
 
@@ -39,16 +36,14 @@ public class ColorController {
 	public String metodoNuevo(Model model) {
 		model.addAttribute("color", new ColorDTO());
 		model.addAttribute("estados", EstadoColor.values());
-		model.addAttribute("colores", colorService.listar()); 
-		return "carpetaColores/paginaColores"; 
+		return "carpetaColores/paginaFormulario"; 
 	}
 
 	@PostMapping("guardar")
 	public String metodoGuarda(@Valid @ModelAttribute("color") ColorDTO colorDto, BindingResult result, Model model) {
 		if (result.hasErrors()) {
 			model.addAttribute("estados", EstadoColor.values());
-			model.addAttribute("colores", colorService.listar()); 
-			return "carpetaColores/paginaColores";
+			return "carpetaColores/paginaFormulario";
 		}
 		colorService.guardar(colorDto);
 		return "redirect:/rutaColores/listar";
@@ -58,8 +53,7 @@ public class ColorController {
 	public String metodoActualiza(@Valid @ModelAttribute("color") ColorDTO colorDto, BindingResult result, Model model) {
 		if (result.hasErrors()) {
 			model.addAttribute("estados", EstadoColor.values());
-			model.addAttribute("colores", colorService.listar()); 
-			return "carpetaColores/paginaColores";
+			return "carpetaColores/paginaFormulario";
 		}
 		colorService.actualiza(colorDto);
 		return "redirect:/rutaColores/listar";
@@ -69,8 +63,7 @@ public class ColorController {
 	public String metodoEditar(Model model, @PathVariable("uuid") UUID uuid) {
 		model.addAttribute("color", colorService.obtenerColorUUID(uuid));
 		model.addAttribute("estados", EstadoColor.values());
-		model.addAttribute("colores", colorService.listar()); 
-		return "carpetaColores/paginaColores";
+		return "carpetaColores/paginaFormulario";
 	}
 	
 	@GetMapping("eliminar/{uuid}")

@@ -16,7 +16,6 @@
 		<table class="table table-bordered table-striped table-sm">
 			<thead class="table-dark">
 				<tr>
-					<th>ID Detalle</th>
 					<th>Producto Relacionado</th>
 					<th>Color</th>
 					<th>Cantidad en Stock</th>
@@ -26,8 +25,7 @@
 			</thead>
 			<tbody>
 				<tr th:each="det : ${detalles}">
-					<td th:text="${det.id}"></td>
-					<td th:text="${det.productoId}"></td>
+					<td th:text="${det.productoNombre}"></td>
 					<td th:text="${det.colorNombre}"></td>
 					<td th:text="${det.stock}"></td>
 					<td th:text="${det.transmision}"></td>
@@ -39,7 +37,7 @@
 					</td>
 				</tr>
 				<tr th:if="${#lists.isEmpty(detalles)}">
-					<td colspan="6" class="text-center text-muted py-4">No hay registros de inventario asignados.</td>
+					<td colspan="5" class="text-center text-muted py-4">No hay registros de inventario asignados.</td>
 				</tr>
 			</tbody>
 		</table>

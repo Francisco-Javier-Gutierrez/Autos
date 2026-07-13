@@ -11,6 +11,9 @@
 	<div class="container-fluid mt-4">
 		<h1 class="mb-4">Catálogo de Clientes</h1>
 		
+		<div class="alert alert-success py-2" th:if="${mensaje}" th:text="${mensaje}"></div>
+		<div class="alert alert-danger py-2" th:if="${mensajeError}" th:text="${mensajeError}"></div>
+		
 		<a th:href="@{/rutaClientes/nuevo}" class="btn btn-primary mb-3">➕ Nuevo Cliente</a>
 
 		<table class="table table-bordered table-striped table-sm">
@@ -19,6 +22,7 @@
 					<th>Nombre</th>
 					<th>Correo Electrónico</th>
 					<th>Teléfono</th>
+					<th>Estatus</th>
 					<th>Acciones</th>
 				</tr>
 			</thead>
@@ -28,6 +32,12 @@
 					<td th:text="${cliente.correo}"></td>
 					<td th:text="${cliente.telefono}"></td>
 					<td>
+						<span class="badge" 
+						      th:classappend="${cliente.estatus.name() == 'Activo' ? 'bg-success' : (cliente.estatus.name() == 'Eliminado' ? 'bg-danger' : 'bg-warning text-dark')}"
+						      th:text="${cliente.estatus}">
+						</span>
+					</td>
+					<td>
 						<a th:href="@{'/rutaClientes/editar/' + ${cliente.uuid}}" class="btn btn-sm btn-primary">✏️</a>
 						<a th:href="@{'/rutaClientes/eliminar/' + ${cliente.uuid}}" 
 						   class="btn btn-sm btn-danger" 
@@ -35,7 +45,7 @@
 					</td>
 				</tr>
 				<tr th:if="${#lists.isEmpty(clientes)}">
-					<td colspan="4" class="text-center text-muted py-4">No hay clientes registrados en el catálogo.</td>
+					<td colspan="5" class="text-center text-muted py-4">No hay clientes registrados en el catálogo.</td>
 				</tr>
 			</tbody>
 		</table>
