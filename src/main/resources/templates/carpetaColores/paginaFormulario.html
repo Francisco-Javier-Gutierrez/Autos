@@ -14,7 +14,6 @@
 		<form th:action="${color.uuid} == null ? @{/rutaColores/guardar} : @{/rutaColores/actualizar}" 
 			  method="post" th:object="${color}">
 
-			<input type="hidden" th:field="*{id}" />
 			<input type="hidden" th:field="*{uuid}" />
 
 			<div class="mb-3">
