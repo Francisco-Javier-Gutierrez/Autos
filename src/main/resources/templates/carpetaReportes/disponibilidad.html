@@ -22,6 +22,12 @@
 
 		<!-- Elemento contenedor que será exportado a PDF -->
 		<div id="reportContent" class="p-2">
+			<div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+				<span class="text-muted fs-6">
+					📅 Reporte generado el: <strong th:text="${fechaGeneracion}"></strong>
+				</span>
+			</div>
+			
 			<div th:each="entry : ${reporte}" class="mb-5">
 				<div class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom"
 				     th:with="coloresEspEng=${ {

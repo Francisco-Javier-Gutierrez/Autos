@@ -25,10 +25,10 @@ public class DetProdDTO {
 
 	private String colorNombre;
 
-	@NotNull(message = "¡El stock es obligatorio!")
-	@Min(value = 0, message = "¡El stock no puede ser un número negativo!")
 	private Integer stock;
 
-	@NotBlank(message = "¡La transmisión es obligatoria!")
-	private String transmision;
+	@NotNull(message = "¡La transmisión es obligatoria!")
+	private com.utsem.app.enums.Transmision transmision;
+
+	private String numerosSerieNuevos;
 }

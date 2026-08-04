@@ -12,7 +12,7 @@
 		<h1 th:text="${detalle.uuid} != null ? 'Editar Registro de Inventario' : '📦 Registrar Stock de Producto'" class="mb-4"></h1>
 
 		<form th:action="${detalle.uuid} == null ? @{/rutaDetalles/guardar} : @{/rutaDetalles/actualizar}" 
-			  method="post" th:object="${detalle}">
+			  method="post" th:object="${detalle}" id="detalleForm">
 
 			<input type="hidden" th:field="*{uuid}" />
 
@@ -45,21 +45,181 @@
 				</div>
 
 				<div class="col-md-6 mb-3">
-					<label class="form-label fw-bold">Cantidad en Stock:</label>
-					<input type="number" step="1" class="form-control" th:field="*{stock}" placeholder="Ej. 10" />
-					<div class="text-danger" th:if="${#fields.hasErrors('stock')}" th:errors="*{stock}">Error</div>
+					<div th:if="${detalle.uuid == null}">
+						<label class="form-label fw-bold">Números de Serie Físicos:</label>
+						<textarea class="form-control" th:field="*{numerosSerieNuevos}" rows="3" placeholder="Ej. VIN12345, VIN98765&#10;(Separados por coma o salto de línea)"></textarea>
+						<div class="form-text">Se creará automáticamente una unidad "Disponible" por cada serie ingresada. El stock se calculará solo.</div>
+					</div>
+					<div th:if="${detalle.uuid != null}">
+						<label class="form-label fw-bold">Cantidad en Stock (Calculado):</label>
+						<input type="text" class="form-control" th:value="${detalle.stock}" readonly disabled />
+					</div>
 				</div>
 			</div>
 
 			<div class="mb-3">
 				<label class="form-label fw-bold">Tipo de Transmisión:</label>
-				<input type="text" class="form-control" th:field="*{transmision}" placeholder="Ej. Automática, Manual..." />
+				<select class="form-select" th:field="*{transmision}">
+					<option value="">--- Selecciona una Transmisión ---</option>
+					<option th:each="trans : ${transmisiones}" 
+					        th:value="${trans}" 
+					        th:text="${trans.displayName}">
+					</option>
+				</select>
 				<div class="text-danger" th:if="${#fields.hasErrors('transmision')}" th:errors="*{transmision}">Error</div>
 			</div>
 
 			<button type="submit" class="btn btn-success">Guardar</button>
 			<a th:href="@{/rutaDetalles/listar}" class="btn btn-secondary">Cancelar</a>
+
+			<!-- Modal para Serie Duplicada en Lote -->
+			<div class="modal fade" id="serialBulkExisteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="serialBulkExisteModalLabel" aria-hidden="true" th:if="${#fields.hasErrors('numerosSerieNuevos')}">
+				<div class="modal-dialog modal-dialog-centered">
+					<div class="modal-content shadow-lg border-0 rounded-3">
+						<div class="modal-header bg-danger text-white border-bottom-0">
+							<h5 class="modal-title fw-bold" id="serialBulkExisteModalLabel">
+								⚠️ Número de Serie Duplicado
+							</h5>
+							<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+						</div>
+						<div class="modal-body py-4 text-dark text-center">
+							<p class="fs-5 mb-0" th:text="${#fields.errors('numerosSerieNuevos')[0]}">¡El número de serie ingresado ya se encuentra registrado!</p>
+						</div>
+						<div class="modal-footer border-top-0 pt-0 justify-content-center">
+							<button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Aceptar</button>
+						</div>
+					</div>
+				</div>
+			</div>
 		</form>
 	</div>
+
+	<!-- Modal para Detalle Existente -->
+	<div class="modal fade" id="detalleExisteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="detalleExisteModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content shadow-lg border-0 rounded-3">
+				<div class="modal-header bg-primary text-dark border-bottom-0">
+					<h5 class="modal-title fw-bold text-dark" id="detalleExisteModalLabel">
+						📦 ¡Detalle de auto existente!
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body py-4 text-dark">
+					<p class="mb-2 fs-5">Este auto ya ha sido registrado previamente con el mismo producto, color y transmisión.</p>
+					<p>¿Deseas agregar los números de serie ingresados al inventario de ese auto existente?</p>
+				</div>
+				<div class="modal-footer border-top-0 pt-0">
+					<button id="btnAceptarDetalle" type="button" class="btn btn-success px-4 fw-semibold">Aceptar</button>
+					<button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal de Error Genérico/Stock -->
+	<div class="modal fade" id="errorStockModal" tabindex="-1" aria-labelledby="errorStockModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content shadow-lg border-0 rounded-3">
+				<div class="modal-header bg-danger text-white border-bottom-0">
+					<h5 class="modal-title fw-bold" id="errorStockModalLabel">
+						⚠️ Error de Inventario
+					</h5>
+					<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body py-4 text-dark text-center">
+					<p class="fs-5 mb-0" id="errorStockModalMessage">Ocurrió un error al procesar el inventario.</p>
+				</div>
+				<div class="modal-footer border-top-0 pt-0 justify-content-center">
+					<button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Aceptar</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		document.addEventListener("DOMContentLoaded", function() {
+			const bulkModalEl = document.getElementById('serialBulkExisteModal');
+			if (bulkModalEl) {
+				const m = new bootstrap.Modal(bulkModalEl);
+				m.show();
+			}
+
+			const form = document.getElementById("detalleForm");
+			const uuidInput = document.getElementById("uuid") || document.querySelector("input[name='uuid']");
+			
+			// Solo validar duplicados si estamos registrando un detalle nuevo (uuid está vacío)
+			if (form && (!uuidInput || !uuidInput.value)) {
+				form.addEventListener("submit", function(event) {
+					event.preventDefault();
+					
+					const productoUuid = document.getElementById("productoUuid").value;
+					const colorUuid = document.getElementById("colorUuid").value;
+					const transmision = document.getElementById("transmision").value.trim();
+					const numerosSerie = document.getElementById("numerosSerieNuevos") ? document.getElementById("numerosSerieNuevos").value.trim() : "";
+					
+					if (!productoUuid || !colorUuid || !transmision) {
+						form.submit();
+						return;
+					}
+					
+					const params = new URLSearchParams({
+						productoUuid: productoUuid,
+						colorUuid: colorUuid,
+						transmision: transmision
+					});
+					
+					fetch('/rutaDetalles/validar-duplicado?' + params.toString())
+						.then(response => response.json())
+						.then(data => {
+							if (data.exists) {
+								const modal = new bootstrap.Modal(document.getElementById('detalleExisteModal'));
+								modal.show();
+								
+								const btnAceptar = document.getElementById("btnAceptarDetalle");
+								btnAceptar.onclick = function() {
+									fetch('/rutaDetalles/agregar-stock', {
+										method: 'POST',
+										headers: {
+											'Content-Type': 'application/x-www-form-urlencoded'
+										},
+										body: new URLSearchParams({
+											uuid: data.uuid,
+											series: numerosSerie
+										})
+									})
+									.then(res => res.json())
+									.then(resData => {
+										if (resData.success) {
+											window.location.href = '/rutaDetalles/listar';
+										} else {
+											const existeModalEl = document.getElementById('detalleExisteModal');
+											const existeModal = bootstrap.Modal.getInstance(existeModalEl);
+											if (existeModal) {
+												existeModal.hide();
+											}
+											document.getElementById('errorStockModalMessage').innerText = resData.message;
+											const errorModal = new bootstrap.Modal(document.getElementById('errorStockModal'));
+											errorModal.show();
+										}
+									})
+									.catch(err => {
+										console.error('Error al agregar stock:', err);
+										document.getElementById('errorStockModalMessage').innerText = 'Ocurrió un error inesperado al agregar el stock.';
+										const errorModal = new bootstrap.Modal(document.getElementById('errorStockModal'));
+										errorModal.show();
+									});
+								};
+							} else {
+								form.submit();
+							}
+						})
+						.catch(error => {
+							console.error('Error al validar duplicado:', error);
+							form.submit();
+						});
+				});
+			}
+		});
+	</script>
 </body>
 </html>

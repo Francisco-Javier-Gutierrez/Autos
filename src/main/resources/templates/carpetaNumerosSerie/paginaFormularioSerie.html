@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title th:text="${serie.uuid} != null ? 'Editar Unidad' : 'Registrar Nueva Unidad'"></title>
+	<div th:replace="~{fragmentos :: bootstrap}"></div>
+</head>
+<body>
+	<div th:replace="~{fragmentos :: menu}"></div>
+
+	<div class="container-fluid mt-4">
+		<h1 th:text="${serie.uuid} != null ? 'Editar Unidad' : '🔢 Registrar Nueva Unidad'" class="mb-4"></h1>
+
+		<form th:action="${serie.uuid} == null ? @{/rutaNumerosSerie/guardar} : @{/rutaNumerosSerie/actualizar}" 
+			  method="post" th:object="${serie}">
+
+			<input type="hidden" th:field="*{uuid}" />
+
+			<div class="mb-3">
+				<label class="form-label fw-bold">Detalle del Vehículo:</label>
+				<select class="form-select" th:field="*{detProdUuid}">
+					<option value="">--- Selecciona un Detalle de Vehículo ---</option>
+					<option th:each="det : ${detalles}" 
+					        th:value="${det.uuid}" 
+					        th:text="${det.productoNombre} + ' — ' + ${det.colorNombre} + ' (' + (${det.transmision} != null ? ${det.transmision.displayName} : '') + ')'"
+					        th:selected="${detProdUuidPreselect != null && det.uuid == detProdUuidPreselect}">
+					</option>
+				</select>
+				<div class="text-danger" th:if="${#fields.hasErrors('detProdUuid')}" th:errors="*{detProdUuid}">Error</div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-6 mb-3">
+					<label class="form-label fw-bold">Número de Serie:</label>
+					<input type="text" class="form-control" th:field="*{numeroSerie}" placeholder="Ej. 3TMCZ5AN1NM012345" />
+					<div class="text-danger" th:if="${#fields.hasErrors('numeroSerie')}" th:errors="*{numeroSerie}">Error</div>
+				</div>
+
+				<div class="col-md-6 mb-3">
+					<label class="form-label fw-bold">Estado de la Unidad:</label>
+					<select class="form-select" th:field="*{estadoUnidad}">
+						<option value="">--- Selecciona un Estado ---</option>
+						<option th:each="estado : ${estadosUnidad}" 
+						        th:value="${estado}" 
+						        th:text="${estado.displayName}">
+						</option>
+					</select>
+					<div class="text-danger" th:if="${#fields.hasErrors('estadoUnidad')}" th:errors="*{estadoUnidad}">Error</div>
+				</div>
+			</div>
+
+			<div class="row">
+				<div class="col-md-6 mb-3">
+					<label class="form-label fw-bold">Fecha de Ingreso:</label>
+					<input type="date" class="form-control" th:field="*{fechaIngreso}" />
+					<div class="text-danger" th:if="${#fields.hasErrors('fechaIngreso')}" th:errors="*{fechaIngreso}">Error</div>
+				</div>
+
+				<div class="col-md-6 mb-3">
+					<label class="form-label fw-bold">Ubicación:</label>
+					<input type="text" class="form-control" th:field="*{ubicacion}" placeholder="Ej. Lote A, Sucursal Centro..." />
+					<div class="text-danger" th:if="${#fields.hasErrors('ubicacion')}" th:errors="*{ubicacion}">Error</div>
+				</div>
+			</div>
+
+			<div class="mb-3">
+				<label class="form-label fw-bold">Pedido Asociado (opcional):</label>
+				<select class="form-select" th:field="*{pedidoUuid}">
+					<option value="">--- Sin pedido ---</option>
+					<option th:each="ped : ${pedidos}" 
+					        th:value="${ped.uuid}" 
+					        th:text="${ped.numFactura} + ' - ' + ${ped.clienteNombre}">
+					</option>
+				</select>
+				<div class="text-danger" th:if="${#fields.hasErrors('pedidoUuid')}" th:errors="*{pedidoUuid}">Error</div>
+			</div>
+
+			<div class="mb-3">
+				<label class="form-label fw-bold">Observaciones:</label>
+				<textarea class="form-control" th:field="*{observaciones}" rows="2"></textarea>
+				<div class="text-danger" th:if="${#fields.hasErrors('observaciones')}" th:errors="*{observaciones}">Error</div>
+			</div>
+
+			<button type="submit" class="btn btn-success">Guardar</button>
+			<a th:href="@{/rutaNumerosSerie/listar}" class="btn btn-secondary">Cancelar</a>
+
+			<!-- Modal para Número de Serie Duplicado -->
+			<div class="modal fade" id="serialExisteModal" tabindex="-1" aria-labelledby="serialExisteModalLabel" aria-hidden="true" th:if="${#fields.hasErrors('numeroSerie')}">
+				<div class="modal-dialog modal-dialog-centered">
+					<div class="modal-content shadow-lg border-0 rounded-3">
+						<div class="modal-header bg-danger text-white border-bottom-0">
+							<h5 class="modal-title fw-bold" id="serialExisteModalLabel">
+								⚠️ Número de Serie Duplicado
+							</h5>
+							<button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+						</div>
+						<div class="modal-body py-4 text-dark text-center">
+							<p class="fs-5 mb-0" th:text="${#fields.errors('numeroSerie')[0]}">¡El número de serie ingresado ya se encuentra registrado!</p>
+						</div>
+						<div class="modal-footer border-top-0 pt-0 justify-content-center">
+							<button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Aceptar</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		window.addEventListener('DOMContentLoaded', () => {
+			const modalElement = document.getElementById('serialExisteModal');
+			if (modalElement) {
+				const modal = new bootstrap.Modal(modalElement);
+				modal.show();
+			}
+		});
+		/*]]>*/
+	</script>
+</body>
+</html>

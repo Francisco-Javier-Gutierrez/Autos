@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.utsem.app.dto.ProductoDTO;
 import com.utsem.app.enums.Estatus;
+import com.utsem.app.enums.Condicion;
 import com.utsem.app.model.Producto;
 import com.utsem.app.repo.ProductoRepo;
 import jakarta.persistence.EntityNotFoundException;
@@ -63,5 +64,19 @@ public class ProductoService {
 	
 	public List<Producto> listarEntidades() {
 		return productoRepo.findAll();
+	}
+
+	public Optional<Producto> buscarDuplicado(String marca, String subMarca, String modelo, Integer anio, Condicion condicion) {
+		if (marca == null || subMarca == null || modelo == null || anio == null || condicion == null) {
+			return Optional.empty();
+		}
+		return productoRepo.findAll().stream()
+				.filter(p -> p.getEstado() != Estatus.Descontinuado)
+				.filter(p -> p.getMarca() != null && p.getMarca().trim().equalsIgnoreCase(marca.trim()))
+				.filter(p -> p.getSubMarca() != null && p.getSubMarca().trim().equalsIgnoreCase(subMarca.trim()))
+				.filter(p -> p.getModelo() != null && p.getModelo().trim().equalsIgnoreCase(modelo.trim()))
+				.filter(p -> p.getAnio() != null && p.getAnio().equals(anio))
+				.filter(p -> p.getCondicion() != null && p.getCondicion() == condicion)
+				.findFirst();
 	}
 }

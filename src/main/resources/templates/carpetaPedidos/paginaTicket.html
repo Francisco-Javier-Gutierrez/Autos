@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title>Ticket de Pedido — Autos</title>
+	<div th:replace="~{fragmentos :: bootstrap}"></div>
+	<style>
+		body {
+			background-color: #f4f6f9;
+		}
+		.ticket-card {
+			max-width: 550px;
+			margin: 40px auto;
+			background-color: #ffffff;
+			border: 1px dashed #ccc;
+			border-radius: 10px;
+			box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+			padding: 30px;
+		}
+		.ticket-header {
+			text-align: center;
+			border-bottom: 2px dashed #eee;
+			padding-bottom: 20px;
+			margin-bottom: 20px;
+		}
+		.ticket-section {
+			border-bottom: 1px dashed #eee;
+			padding-bottom: 15px;
+			margin-bottom: 15px;
+		}
+		.ticket-label {
+			font-weight: bold;
+			color: #555;
+			font-size: 0.9rem;
+			text-transform: uppercase;
+		}
+		.ticket-value {
+			color: #111;
+			font-size: 1.05rem;
+		}
+		.vin-badge {
+			display: inline-block;
+			background-color: #e9ecef;
+			color: #495057;
+			padding: 4px 8px;
+			border-radius: 4px;
+			font-family: monospace;
+			font-size: 0.85rem;
+			margin: 2px;
+			border: 1px solid #ced4da;
+		}
+		
+		@media print {
+			body {
+				background-color: #ffffff;
+			}
+			/* Ocultar barra de navegación y botones al imprimir */
+			.no-print {
+				display: none !important;
+			}
+			.ticket-card {
+				box-shadow: none !important;
+				border: none !important;
+				margin: 0 !important;
+				padding: 0 !important;
+				max-width: 100% !important;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div th:replace="~{fragmentos :: menu}" class="no-print"></div>
+
+	<div class="container mt-3">
+		<!-- Controles de navegación y descarga -->
+		<div class="d-flex justify-content-between align-items-center max-width mx-auto no-print" style="max-width: 550px;">
+			<a th:href="@{/rutaPedidos/listar}" class="btn btn-secondary btn-sm">⬅️ Volver a la lista</a>
+			<button onclick="window.print()" class="btn btn-danger btn-sm">🖨️ Imprimir Ticket</button>
+		</div>
+
+		<!-- Estructura del Ticket imprimible -->
+		<div class="ticket-card" id="ticketContent">
+			<div class="ticket-header">
+				<h2 class="fw-bold mb-1 text-primary">🚗 CONCESIONARIA AUTOS</h2>
+				<p class="text-muted mb-0 fs-7">Calle de la Innovación 456, Col. Centro</p>
+				<p class="text-muted mb-2 fs-7">RFC: CAUT800101-XYZ</p>
+				<h4 class="fw-bold mt-3 text-dark">TICKET DE COMPRA</h4>
+				<span class="badge bg-success fs-6" th:text="${pedido.numFactura}">FAC-00000000-0000</span>
+			</div>
+
+			<!-- Fecha y Estado -->
+			<div class="row ticket-section">
+				<div class="col-6">
+					<div class="ticket-label">Fecha Pedido:</div>
+					<div class="ticket-value" th:text="${#temporals.format(pedido.fechaPedido, 'dd/MM/yyyy HH:mm')}">15/07/2026 12:00</div>
+				</div>
+				<div class="col-6 text-end">
+					<div class="ticket-label">Estatus:</div>
+					<span class="badge" th:classappend="${pedido.estadoPedido.toString() == 'Completado' ? 'bg-success' : 'bg-warning text-dark'}" 
+					      th:text="${pedido.estadoPedido}">Pendiente</span>
+				</div>
+			</div>
+
+			<!-- Datos del Cliente -->
+			<div class="ticket-section">
+				<h6 class="fw-bold text-secondary mb-2">👤 DATOS DEL CLIENTE</h6>
+				<div class="mb-1">
+					<span class="ticket-label">Nombre:</span>
+					<span class="ticket-value fw-bold" th:text="${pedido.clienteNombre}">Cliente Ejemplo</span>
+				</div>
+				<div class="mb-1" th:if="${pedido.clienteCorreo}">
+					<span class="ticket-label">Correo:</span>
+					<span class="ticket-value" th:text="${pedido.clienteCorreo}">correo@ejemplo.com</span>
+				</div>
+				<div class="mb-1" th:if="${pedido.clienteTelefono}">
+					<span class="ticket-label">Teléfono:</span>
+					<span class="ticket-value" th:text="${pedido.clienteTelefono}">7221234567</span>
+				</div>
+			</div>
+
+			<!-- Datos del Vehículo -->
+			<div class="ticket-section">
+				<h6 class="fw-bold text-secondary mb-2">🚘 DETALLE DEL VEHÍCULO</h6>
+				<div class="mb-2">
+					<div class="ticket-value fw-bold" th:text="${pedido.detProdInfo}">Mazda 3 i Grand Touring - Rojo [Automatica]</div>
+				</div>
+				<div class="row">
+					<div class="col-6">
+						<div class="ticket-label">Precio Unitario:</div>
+						<div class="ticket-value fw-bold text-dark" th:text="${pedido.precioUnitario != null ? '$' + #numbers.formatDecimal(pedido.precioUnitario, 1, 'COMMA', 2, 'POINT') : '$0.00'}">$0.00</div>
+					</div>
+					<div class="col-6 text-end">
+						<div class="ticket-label">Cantidad:</div>
+						<div class="ticket-value fw-bold text-dark" th:text="${pedido.cantidad}">1</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Números de Serie / VINs -->
+			<div class="ticket-section" th:if="${pedido.numeroSerieTexts != null && !#lists.isEmpty(pedido.numeroSerieTexts)}">
+				<h6 class="fw-bold text-secondary mb-2">🔑 UNIDADES ASIGNADAS (VIN / SERIAL)</h6>
+				<div class="d-flex flex-wrap mt-1">
+					<span th:each="vin : ${pedido.numeroSerieTexts}" class="vin-badge" th:text="${vin}">VIN123456789</span>
+				</div>
+			</div>
+
+			<!-- Calificaciones y reseña extra (Campos Dinámicos) -->
+			<div class="ticket-section row" th:if="${pedido.valoracionRubiFA != null || pedido.resenaFrancelyAnaidGH != null}">
+				<div class="col-6" th:if="${pedido.valoracionRubiFA != null}">
+					<div class="ticket-label">Valoración (Rubi):</div>
+					<div class="ticket-value">
+						<span th:each="star : ${#numbers.sequence(1, pedido.valoracionRubiFA)}">⭐</span>
+					</div>
+				</div>
+				<div class="col-6 text-end" th:if="${pedido.favoritoPerlaMM != null}">
+					<div class="ticket-label">Favorito (Perla):</div>
+					<div class="ticket-value" th:text="${pedido.favoritoPerlaMM ? 'Sí' : 'No'}">No</div>
+				</div>
+				<div class="col-12 mt-2" th:if="${pedido.resenaFrancelyAnaidGH != null && !#strings.isEmpty(pedido.resenaFrancelyAnaidGH)}">
+					<div class="ticket-label">Reseña (Francely):</div>
+					<div class="ticket-value text-muted italic fs-7" th:text="'“' + ${pedido.resenaFrancelyAnaidGH} + '”'">Reseña</div>
+				</div>
+			</div>
+
+			<!-- Total a Pagar -->
+			<div class="pt-2 text-end">
+				<h5 class="ticket-label mb-0">TOTAL NETO</h5>
+				<h2 class="fw-bold text-success" th:text="${'$' + #numbers.formatDecimal(pedido.total, 1, 'COMMA', 2, 'POINT')}">$0.00</h2>
+			</div>
+
+			<div class="text-center mt-4 border-top pt-3">
+				<p class="mb-0 text-muted fs-7">¡Gracias por su preferencia!</p>
+				<p class="text-muted fs-8">Conserve este ticket para cualquier trámite o garantía.</p>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

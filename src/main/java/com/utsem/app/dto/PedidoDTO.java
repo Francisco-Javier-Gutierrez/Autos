@@ -3,6 +3,7 @@ package com.utsem.app.dto;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.List;
 import com.utsem.app.enums.Estado;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -50,6 +51,12 @@ public class PedidoDTO {
 	@Min(value = 1, message = "¡El nivel de interés debe ser al menos 1!")
 	@Max(value = 3, message = "¡El nivel de interés máximo es 3!")
 	private Integer nivelInteresFranciscoJavierGH;
+	
+	private List<UUID> numeroSerieUuids;
+	private List<String> numeroSerieTexts;
+	private String clienteCorreo;
+	private String clienteTelefono;
+	private Double precioUnitario;
 
 	private UUID uuid;
 }

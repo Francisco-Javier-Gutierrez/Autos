@@ -16,14 +16,16 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "detProd")
+@Table(name = "detProd", uniqueConstraints = {
+	@jakarta.persistence.UniqueConstraint(columnNames = {"productId", "colorId", "transmision"})
+})
 public class DetProd {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@jakarta.persistence.Column(unique = true, nullable = false)
+	@Column(unique = true, nullable = false)
 	private java.util.UUID uuid;
 
 	@jakarta.persistence.PrePersist
@@ -43,5 +45,5 @@ public class DetProd {
 	private Integer stock;
 
 	@Column(length = 50)
-	private String transmision;
+	private com.utsem.app.enums.Transmision transmision;
 }

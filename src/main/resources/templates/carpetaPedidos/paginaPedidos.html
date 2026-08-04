@@ -48,6 +48,7 @@
 						<span th:case="*">-</span>
 					</td>
 					<td>
+						<a th:href="@{'/rutaPedidos/ticket/' + ${pedido.uuid}}" class="btn btn-sm btn-info text-white" title="Ver Ticket">🔍</a>
 						<a th:href="@{'/rutaPedidos/editar/' + ${pedido.uuid}}" class="btn btn-sm btn-primary">✏️</a>
 						<a th:href="@{'/rutaPedidos/eliminar/' + ${pedido.uuid}}"
 							class="btn btn-sm btn-danger" onclick="return confirm('¿Está seguro?')">🗑️</a>

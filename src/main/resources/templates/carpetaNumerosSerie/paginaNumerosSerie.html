@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title>Números de Serie - Unidades Vehiculares</title>
+	<div th:replace="~{fragmentos :: bootstrap}"></div>
+</head>
+<body>
+	<div th:replace="~{fragmentos :: menu}"></div>
+	
+	<div class="container-fluid mt-4">
+		<h1 class="mb-4">Números de Serie - Unidades Vehiculares</h1>
+		
+		<div class="d-flex gap-2 mb-3">
+			<a th:if="${detProdUuid == null}" th:href="@{/rutaNumerosSerie/nuevo}" class="btn btn-primary">➕ Nueva Unidad</a>
+			<a th:if="${detProdUuid != null}" th:href="@{'/rutaNumerosSerie/nuevo/' + ${detProdUuid}}" class="btn btn-primary">➕ Nueva Unidad</a>
+			<a th:if="${detProdUuid != null}" th:href="@{/rutaDetalles/listar}" class="btn btn-outline-secondary">⬅ Volver a Detalles</a>
+		</div>
+
+		<table class="table table-bordered table-striped table-sm">
+			<thead class="table-dark">
+				<tr>
+					<th>Detalle del Vehículo</th>
+					<th>Número de Serie</th>
+					<th>Estado</th>
+					<th>Fecha Ingreso</th>
+					<th>Ubicación</th>
+					<th>Pedido (Factura)</th>
+					<th>Acciones</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="serie : ${series}">
+					<td th:text="${serie.detProdDescripcion}"></td>
+					<td th:text="${serie.numeroSerie}"></td>
+					<td th:text="${serie.estadoUnidad != null ? serie.estadoUnidad.displayName : ''}"></td>
+					<td th:text="${serie.fechaIngreso}"></td>
+					<td th:text="${serie.ubicacion}"></td>
+					<td th:text="${serie.pedidoFactura}"></td>
+					<td>
+						<a th:href="@{'/rutaNumerosSerie/editar/' + ${serie.uuid}}" class="btn btn-sm btn-primary">✏️</a>
+						<a th:href="@{'/rutaNumerosSerie/eliminar/' + ${serie.uuid}}" 
+						   class="btn btn-sm btn-danger"
+						   data-action="delete"
+						   onclick="return confirm('¿Está seguro de que desea eliminar esta unidad?')">🗑️</a>
+					</td>
+				</tr>
+				<tr th:if="${#lists.isEmpty(series)}">
+					<td colspan="7" class="text-center text-muted py-4">No hay unidades registradas.</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>

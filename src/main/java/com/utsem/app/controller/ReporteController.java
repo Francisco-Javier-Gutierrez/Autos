@@ -1,6 +1,7 @@
 package com.utsem.app.controller;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -15,6 +16,7 @@ import com.utsem.app.model.Color;
 import com.utsem.app.model.DetProd;
 import com.utsem.app.model.Pedido;
 import com.utsem.app.service.DetProdService;
+import com.utsem.app.service.PedidoService;
 
 @Controller
 @RequestMapping("rutaReportes")
@@ -24,7 +26,7 @@ public class ReporteController {
 	private DetProdService detProdService;
 
 	@Autowired
-	private com.utsem.app.service.PedidoService pedidoService;
+	private PedidoService pedidoService;
 
 	@GetMapping("disponibilidad")
 	public String metodoReporteDisponibilidad(Model model) {
@@ -33,6 +35,8 @@ public class ReporteController {
 				.filter(det -> det.getColor() != null)
 				.collect(Collectors.groupingBy(DetProd::getColor));
 
+		String fechaGen = java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss", new Locale("es", "ES")));
+		model.addAttribute("fechaGeneracion", fechaGen);
 		model.addAttribute("reporte", reporte);
 		return "carpetaReportes/disponibilidad";
 	}
@@ -44,7 +48,7 @@ public class ReporteController {
 				.filter(p -> p.getFechaPedido() != null)
 				.collect(Collectors.groupingBy(
 						p -> java.time.YearMonth.from(p.getFechaPedido()),
-						() -> new java.util.TreeMap<java.time.YearMonth, List<Pedido>>(java.util.Comparator.reverseOrder()),
+						() -> new java.util.TreeMap<java.time.YearMonth, List<Pedido>>(Comparator.reverseOrder()),
 						Collectors.toList()
 				));
 
@@ -57,6 +61,8 @@ public class ReporteController {
 			reporte.put(mesLegible, lista);
 		});
 
+		String fechaGen = java.time.LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss", new Locale("es", "ES")));
+		model.addAttribute("fechaGeneracion", fechaGen);
 		model.addAttribute("reporte", reporte);
 		return "carpetaReportes/ventasMes";
 	}

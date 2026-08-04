@@ -14,6 +14,9 @@ import com.utsem.app.repo.PedidoRepo;
 import com.utsem.app.repo.ProductoRepo;
 import com.utsem.app.repo.ClienteRepo;
 import com.utsem.app.repo.DetProdRepo;
+import com.utsem.app.repo.NumeroSerieRepo;
+import com.utsem.app.model.NumeroSerie;
+import com.utsem.app.enums.EstadoUnidad;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -23,6 +26,9 @@ import java.util.Random;
 @Service
 @Transactional
 public class PedidoService {
+
+	@Autowired
+	private NumeroSerieRepo numeroSerieRepo;
 
 	@Autowired
 	PedidoRepo pedidoRepo;
@@ -87,26 +93,26 @@ public class PedidoService {
 			pedido.setCliente(cli);
 		}
 		
-		// Generar número de factura automáticamente
 		if (pedido.getNumFactura() == null || pedido.getNumFactura().isBlank()) {
 			String autoFactura = "FAC-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + "-" + String.format("%04d", new Random().nextInt(10000));
 			pedido.setNumFactura(autoFactura);
 		}
 		
-		// Validar y descontar stock
 		if (det != null) {
-			if (pedidoDTO.getCantidad() == null || pedidoDTO.getCantidad() < 1) {
-				throw new IllegalArgumentException("La cantidad debe ser al menos 1");
+			if (pedidoDTO.getNumeroSerieUuids() != null && !pedidoDTO.getNumeroSerieUuids().isEmpty()) {
+				int cant = pedidoDTO.getNumeroSerieUuids().size();
+				pedido.setCantidad(cant);
+				pedidoDTO.setCantidad(cant);
+			} else {
+				if (pedidoDTO.getCantidad() == null || pedidoDTO.getCantidad() < 1) {
+					throw new IllegalArgumentException("La cantidad debe ser al menos 1");
+				}
+				if (pedidoDTO.getCantidad() > det.getStock()) {
+					throw new IllegalArgumentException("No hay suficiente stock. Disponibles: " + det.getStock());
+				}
 			}
-			if (pedidoDTO.getCantidad() > det.getStock()) {
-				throw new IllegalArgumentException("No hay suficiente stock. Disponibles: " + det.getStock());
-			}
-			det.setStock(det.getStock() - pedidoDTO.getCantidad());
-			detProdRepo.save(det);
-			actualizarEstadoProducto(det);
 		}
 		
-		// Calcular total automáticamente (cantidad * precio del producto)
 		if (det != null && det.getProducto() != null && det.getProducto().getPrecio() != null && pedidoDTO.getCantidad() != null) {
 			BigDecimal precio = BigDecimal.valueOf(det.getProducto().getPrecio());
 			BigDecimal totalCalculado = precio.multiply(BigDecimal.valueOf(pedidoDTO.getCantidad()));
@@ -115,7 +121,37 @@ public class PedidoService {
 			pedido.setTotal(BigDecimal.ZERO);
 		}
 		
-		pedidoRepo.save(pedido);
+		pedido = pedidoRepo.save(pedido);
+
+		if (det != null) {
+			if (pedidoDTO.getNumeroSerieUuids() != null && !pedidoDTO.getNumeroSerieUuids().isEmpty()) {
+				for (UUID nsUuid : pedidoDTO.getNumeroSerieUuids()) {
+					NumeroSerie ns = numeroSerieRepo.findByUuid(nsUuid)
+							.orElseThrow(() -> new EntityNotFoundException("Número de serie no encontrado con UUID: " + nsUuid));
+					if (ns.getEstadoUnidad() != EstadoUnidad.Disponible) {
+						throw new IllegalArgumentException("El número de serie " + ns.getNumeroSerie() + " no está disponible");
+					}
+					ns.setEstadoUnidad(EstadoUnidad.Vendido);
+					ns.setPedido(pedido);
+					ns.setUbicacion("Entregado a cliente / Asignado a Pedido");
+					numeroSerieRepo.save(ns);
+				}
+			} else {
+				int cantidadAAsignar = pedidoDTO.getCantidad();
+				List<NumeroSerie> disponibles = numeroSerieRepo.findByDetProdIdAndEstadoUnidadOrderByFechaIngresoAsc(det.getId(), EstadoUnidad.Disponible);
+				if (disponibles.size() < cantidadAAsignar) {
+					throw new IllegalArgumentException("No hay suficientes números de serie disponibles. Requeridos: " + cantidadAAsignar + ", Disponibles: " + disponibles.size());
+				}
+				for (int i = 0; i < cantidadAAsignar; i++) {
+					NumeroSerie ns = disponibles.get(i);
+					ns.setEstadoUnidad(EstadoUnidad.Vendido);
+					ns.setPedido(pedido);
+					ns.setUbicacion("Entregado a cliente / Asignado a Pedido");
+					numeroSerieRepo.save(ns);
+				}
+			}
+			sincronizarStock(det);
+		}
 	}
 
 	public void actualiza(PedidoDTO pedidoDTO) {
@@ -140,40 +176,99 @@ public class PedidoService {
 			pedidoExistente.setCliente(null);
 		}
 		
-		// Validar y ajustar stock
-		if (detOld != detNew) {
-			// Devolver stock al anterior
-			if (detOld != null) {
-				detOld.setStock(detOld.getStock() + (pedidoExistente.getCantidad() != null ? pedidoExistente.getCantidad() : 0));
-				detProdRepo.save(detOld);
-				actualizarEstadoProducto(detOld);
-			}
-			// Descontar stock del nuevo
-			if (detNew != null) {
-				if (pedidoDTO.getCantidad() == null || pedidoDTO.getCantidad() < 1) {
-					throw new IllegalArgumentException("La cantidad debe ser al menos 1");
-				}
-				if (pedidoDTO.getCantidad() > detNew.getStock()) {
-					throw new IllegalArgumentException("No hay suficiente stock. Disponibles: " + detNew.getStock());
-				}
-				detNew.setStock(detNew.getStock() - pedidoDTO.getCantidad());
-				detProdRepo.save(detNew);
-				actualizarEstadoProducto(detNew);
-			}
-		} else if (detNew != null) {
-			// Mismo detProd, validar diferencia
-			int oldCant = pedidoExistente.getCantidad() != null ? pedidoExistente.getCantidad() : 0;
-			int newCant = pedidoDTO.getCantidad() != null ? pedidoDTO.getCantidad() : 0;
-			int diff = newCant - oldCant;
-			if (diff > detNew.getStock()) {
-				throw new IllegalArgumentException("No hay suficiente stock. Disponibles: " + detNew.getStock());
-			}
-			detNew.setStock(detNew.getStock() - diff);
-			detProdRepo.save(detNew);
-			actualizarEstadoProducto(detNew);
+		if (pedidoDTO.getNumeroSerieUuids() != null && !pedidoDTO.getNumeroSerieUuids().isEmpty()) {
+			pedidoDTO.setCantidad(pedidoDTO.getNumeroSerieUuids().size());
+		}
+		int newCant = pedidoDTO.getCantidad() != null ? pedidoDTO.getCantidad() : 0;
+		if (newCant < 1) {
+			throw new IllegalArgumentException("La cantidad debe ser al menos 1");
 		}
 		
-		// Calcular total automáticamente (cantidad * precio del producto)
+		List<NumeroSerie> seriesAsignadas = numeroSerieRepo.findByPedidoId(pedidoExistente.getId());
+		
+		if (pedidoDTO.getNumeroSerieUuids() != null && !pedidoDTO.getNumeroSerieUuids().isEmpty()) {
+			List<UUID> newUuids = pedidoDTO.getNumeroSerieUuids();
+			
+			for (NumeroSerie ns : seriesAsignadas) {
+				if (!newUuids.contains(ns.getUuid())) {
+					ns.setEstadoUnidad(EstadoUnidad.Disponible);
+					ns.setPedido(null);
+					ns.setUbicacion("Inventario Principal");
+					numeroSerieRepo.save(ns);
+				}
+			}
+			
+			for (UUID nsUuid : newUuids) {
+				boolean yaAsignado = seriesAsignadas.stream().anyMatch(ns -> ns.getUuid().equals(nsUuid));
+				if (!yaAsignado) {
+					NumeroSerie nsNew = numeroSerieRepo.findByUuid(nsUuid)
+							.orElseThrow(() -> new EntityNotFoundException("Número de serie no encontrado con UUID: " + nsUuid));
+					if (nsNew.getEstadoUnidad() != EstadoUnidad.Disponible) {
+						throw new IllegalArgumentException("El número de serie " + nsNew.getNumeroSerie() + " no está disponible");
+					}
+					nsNew.setEstadoUnidad(EstadoUnidad.Vendido);
+					nsNew.setPedido(pedidoExistente);
+					nsNew.setUbicacion("Entregado a cliente / Asignado a Pedido");
+					numeroSerieRepo.save(nsNew);
+				}
+			}
+		} else {
+			if (detOld != detNew) {
+				for (NumeroSerie ns : seriesAsignadas) {
+					ns.setEstadoUnidad(EstadoUnidad.Disponible);
+					ns.setPedido(null);
+					ns.setUbicacion("Inventario Principal");
+					numeroSerieRepo.save(ns);
+				}
+				seriesAsignadas.clear();
+				
+				if (detNew != null) {
+					if (newCant > detNew.getStock()) {
+						throw new IllegalArgumentException("No hay suficiente stock. Disponibles: " + detNew.getStock());
+					}
+					List<NumeroSerie> disponibles = numeroSerieRepo.findByDetProdIdAndEstadoUnidadOrderByFechaIngresoAsc(detNew.getId(), EstadoUnidad.Disponible);
+					if (disponibles.size() < newCant) {
+						throw new IllegalArgumentException("No hay suficientes números de serie disponibles. Requeridos: " + newCant + ", Disponibles: " + disponibles.size());
+					}
+					for (int i = 0; i < newCant; i++) {
+						NumeroSerie ns = disponibles.get(i);
+						ns.setEstadoUnidad(EstadoUnidad.Vendido);
+						ns.setPedido(pedidoExistente);
+						ns.setUbicacion("Entregado a cliente / Asignado a Pedido");
+						numeroSerieRepo.save(ns);
+					}
+				}
+			} else if (detNew != null) {
+				int oldCant = seriesAsignadas.size();
+				if (newCant > oldCant) {
+					int diff = newCant - oldCant;
+					if (diff > detNew.getStock()) {
+						throw new IllegalArgumentException("No hay suficiente stock. Disponibles: " + detNew.getStock());
+					}
+					List<NumeroSerie> disponibles = numeroSerieRepo.findByDetProdIdAndEstadoUnidadOrderByFechaIngresoAsc(detNew.getId(), EstadoUnidad.Disponible);
+					if (disponibles.size() < diff) {
+						throw new IllegalArgumentException("No hay suficientes números de serie disponibles. Requeridos adicionales: " + diff + ", Disponibles: " + disponibles.size());
+					}
+					for (int i = 0; i < diff; i++) {
+						NumeroSerie ns = disponibles.get(i);
+						ns.setEstadoUnidad(EstadoUnidad.Vendido);
+						ns.setPedido(pedidoExistente);
+						ns.setUbicacion("Entregado a cliente / Asignado a Pedido");
+						numeroSerieRepo.save(ns);
+					}
+				} else if (newCant < oldCant) {
+					int diff = oldCant - newCant;
+					for (int i = 0; i < diff; i++) {
+						NumeroSerie ns = seriesAsignadas.get(oldCant - 1 - i);
+						ns.setEstadoUnidad(EstadoUnidad.Disponible);
+						ns.setPedido(null);
+						ns.setUbicacion("Inventario Principal");
+						numeroSerieRepo.save(ns);
+					}
+				}
+			}
+		}
+
 		if (detNew != null && detNew.getProducto() != null && detNew.getProducto().getPrecio() != null && pedidoDTO.getCantidad() != null) {
 			BigDecimal precio = BigDecimal.valueOf(detNew.getProducto().getPrecio());
 			BigDecimal totalCalculado = precio.multiply(BigDecimal.valueOf(pedidoDTO.getCantidad()));
@@ -181,8 +276,6 @@ public class PedidoService {
 		} else {
 			pedidoExistente.setTotal(BigDecimal.ZERO);
 		}
-		
-		// Mantener número de factura existente o generar uno nuevo si está vacío
 		if (pedidoExistente.getNumFactura() == null || pedidoExistente.getNumFactura().isBlank()) {
 			if (pedidoDTO.getNumFactura() != null && !pedidoDTO.getNumFactura().isBlank()) {
 				pedidoExistente.setNumFactura(pedidoDTO.getNumFactura());
@@ -200,21 +293,43 @@ public class PedidoService {
 		pedidoExistente.setNivelInteresFranciscoJavierGH(pedidoDTO.getNivelInteresFranciscoJavierGH());
 
 		pedidoRepo.saveAndFlush(pedidoExistente);
+
+		if (detOld != null) {
+			sincronizarStock(detOld);
+		}
+		if (detNew != null && detNew != detOld) {
+			sincronizarStock(detNew);
+		}
 	}
 
 	public void borrar(UUID uuid) {
 		Pedido pedidoExistente = pedidoRepo.findByUuid(uuid)
 				.orElseThrow(() -> new EntityNotFoundException("Pedido no encontrado con el UUID: " + uuid));
 		
-		// Devolver stock al borrar el pedido
-		if (pedidoExistente.getDetProd() != null) {
-			DetProd det = pedidoExistente.getDetProd();
-			det.setStock(det.getStock() + (pedidoExistente.getCantidad() != null ? pedidoExistente.getCantidad() : 0));
-			detProdRepo.save(det);
-			actualizarEstadoProducto(det);
+		DetProd det = pedidoExistente.getDetProd();
+		
+		List<NumeroSerie> asignadas = numeroSerieRepo.findByPedidoId(pedidoExistente.getId());
+		for (NumeroSerie ns : asignadas) {
+			ns.setEstadoUnidad(EstadoUnidad.Disponible);
+			ns.setPedido(null);
+			ns.setUbicacion("Inventario Principal");
+			numeroSerieRepo.save(ns);
 		}
 		
 		pedidoRepo.delete(pedidoExistente);
+		
+		if (det != null) {
+			sincronizarStock(det);
+		}
+	}
+
+	private void sincronizarStock(DetProd detProd) {
+		if (detProd != null) {
+			long disponibles = numeroSerieRepo.countByDetProdIdAndEstadoUnidad(detProd.getId(), EstadoUnidad.Disponible);
+			detProd.setStock((int) disponibles);
+			detProdRepo.save(detProd);
+			actualizarEstadoProducto(detProd);
+		}
 	}
 
 	public List<Pedido> listarEntidades() {
@@ -247,7 +362,20 @@ public class PedidoService {
 		if (pedido.getCliente() != null) {
 			dto.setClienteUuid(pedido.getCliente().getUuid());
 			dto.setClienteNombre(pedido.getCliente().getNombre());
+			dto.setClienteCorreo(pedido.getCliente().getCorreo());
+			dto.setClienteTelefono(pedido.getCliente().getTelefono());
 		}
+		if (pedido.getDetProd() != null && pedido.getDetProd().getProducto() != null) {
+			dto.setPrecioUnitario(pedido.getDetProd().getProducto().getPrecio());
+		}
+		
+		// Cargar lista de números de serie específicos asignados a esta orden
+		List<NumeroSerie> series = numeroSerieRepo.findByPedidoId(pedido.getId());
+		if (!series.isEmpty()) {
+			dto.setNumeroSerieUuids(series.stream().map(NumeroSerie::getUuid).toList());
+			dto.setNumeroSerieTexts(series.stream().map(NumeroSerie::getNumeroSerie).toList());
+		}
+		
 		return dto;
 	}
 

@@ -1,6 +1,9 @@
 package com.utsem.app.model;
 
 import java.util.UUID;
+
+import com.utsem.app.enums.EstatusCliente;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -38,7 +41,7 @@ public class Cliente {
 
 	@Enumerated(jakarta.persistence.EnumType.STRING)
 	@Column(length = 30, nullable = false)
-	private com.utsem.app.enums.EstatusCliente estatus = com.utsem.app.enums.EstatusCliente.Activo;
+	private EstatusCliente estatus = EstatusCliente.Activo;
 
 	@PrePersist
 	private void inicializarUuid() {

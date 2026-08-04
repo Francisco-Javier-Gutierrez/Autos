@@ -1,6 +1,7 @@
 package com.utsem.app.controller;
 
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -19,6 +20,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequestMapping("rutaProductos")
@@ -30,7 +33,7 @@ public class ProductoController {
 	@GetMapping("listar")
 	public String metodoListar(Model model) {
 		model.addAttribute("productos", productoService.listar());
-		model.addAttribute("randomCol", java.util.concurrent.ThreadLocalRandom.current().nextInt(4));
+		model.addAttribute("randomCol", ThreadLocalRandom.current().nextInt(4));
 		return "carpetaProductos/paginaProductos";
 	}
 
@@ -76,5 +79,25 @@ public class ProductoController {
 	public String metodoElimina(@PathVariable UUID uuid) {
 		productoService.borrar(uuid);
 		return "redirect:/rutaProductos/listar";
+	}
+
+	@GetMapping("validar-duplicado")
+	@ResponseBody
+	public java.util.Map<String, Object> validarDuplicado(
+			@RequestParam("marca") String marca,
+			@RequestParam("subMarca") String subMarca,
+			@RequestParam("modelo") String modelo,
+			@RequestParam("anio") Integer anio,
+			@RequestParam("condicion") Condicion condicion) {
+		
+		java.util.Map<String, Object> response = new java.util.HashMap<>();
+		java.util.Optional<com.utsem.app.model.Producto> duplicate = productoService.buscarDuplicado(marca, subMarca, modelo, anio, condicion);
+		if (duplicate.isPresent()) {
+			response.put("exists", true);
+			response.put("uuid", duplicate.get().getUuid());
+		} else {
+			response.put("exists", false);
+		}
+		return response;
 	}
 }

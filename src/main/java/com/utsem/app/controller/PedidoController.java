@@ -16,6 +16,9 @@ import com.utsem.app.service.DetProdService;
 import com.utsem.app.service.ClienteService;
 import com.utsem.app.model.DetProd;
 import com.utsem.app.model.Cliente;
+import com.utsem.app.model.NumeroSerie;
+import com.utsem.app.enums.EstadoUnidad;
+import com.utsem.app.repo.NumeroSerieRepo;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -34,6 +37,9 @@ public class PedidoController {
 
 	@Autowired
 	ClienteService clienteService;
+
+	@Autowired
+	private NumeroSerieRepo numeroSerieRepo;
 
 	@GetMapping("listar")
 	public String metodoListar(Model model) {
@@ -55,6 +61,14 @@ public class PedidoController {
 				.toList();
 	}
 
+	private List<NumeroSerie> obtenerSeriesDisponibles(PedidoDTO pedido) {
+		List<NumeroSerie> todas = numeroSerieRepo.findAll();
+		return todas.stream().filter(ns -> 
+			ns.getEstadoUnidad() == EstadoUnidad.Disponible || 
+			(pedido != null && pedido.getNumeroSerieUuids() != null && pedido.getNumeroSerieUuids().contains(ns.getUuid()))
+		).toList();
+	}
+
 	@GetMapping("nuevo")
 	public String metodoNuevo(Model model) {
 		PedidoDTO pedido = new PedidoDTO();
@@ -62,12 +76,17 @@ public class PedidoController {
 		model.addAttribute("estados", Estado.values());
 		model.addAttribute("detalles", obtenerDetallesFiltrados(pedido));
 		model.addAttribute("clientes", obtenerClientesFiltrados(pedido));
+		model.addAttribute("series", obtenerSeriesDisponibles(pedido));
 		return "carpetaPedidos/paginaFormulario";
 	}
 
 	@PostMapping("guardar")
 	public String metodoGuarda(@Valid @ModelAttribute("pedido") PedidoDTO pedDto, BindingResult result, Model model) {
-		if (pedDto.getDetProdUuid() != null) {
+		if (pedDto.getNumeroSerieUuids() != null && !pedDto.getNumeroSerieUuids().isEmpty()) {
+			pedDto.setCantidad(pedDto.getNumeroSerieUuids().size());
+		}
+
+		if (pedDto.getDetProdUuid() != null && (pedDto.getNumeroSerieUuids() == null || pedDto.getNumeroSerieUuids().isEmpty())) {
 			DetProd det = detProdService.listarEntidades().stream()
 					.filter(d -> d.getUuid().equals(pedDto.getDetProdUuid())).findFirst().orElse(null);
 			if (det != null && pedDto.getCantidad() != null && pedDto.getCantidad() > det.getStock()) {
@@ -81,6 +100,7 @@ public class PedidoController {
 			model.addAttribute("estados", Estado.values());
 			model.addAttribute("detalles", obtenerDetallesFiltrados(pedDto));
 			model.addAttribute("clientes", obtenerClientesFiltrados(pedDto));
+			model.addAttribute("series", obtenerSeriesDisponibles(pedDto));
 			return "carpetaPedidos/paginaFormulario";
 		}
 
@@ -91,6 +111,7 @@ public class PedidoController {
 			model.addAttribute("estados", Estado.values());
 			model.addAttribute("detalles", obtenerDetallesFiltrados(pedDto));
 			model.addAttribute("clientes", obtenerClientesFiltrados(pedDto));
+			model.addAttribute("series", obtenerSeriesDisponibles(pedDto));
 			return "carpetaPedidos/paginaFormulario";
 		}
 		return "redirect:/rutaPedidos/listar";
@@ -99,7 +120,11 @@ public class PedidoController {
 	@PostMapping("actualizar")
 	public String metodoActualiza(@Valid @ModelAttribute("pedido") PedidoDTO pedDto, BindingResult result,
 			Model model) {
-		if (pedDto.getDetProdUuid() != null && pedDto.getUuid() != null) {
+		if (pedDto.getNumeroSerieUuids() != null && !pedDto.getNumeroSerieUuids().isEmpty()) {
+			pedDto.setCantidad(pedDto.getNumeroSerieUuids().size());
+		}
+
+		if (pedDto.getDetProdUuid() != null && pedDto.getUuid() != null && (pedDto.getNumeroSerieUuids() == null || pedDto.getNumeroSerieUuids().isEmpty())) {
 			try {
 				PedidoDTO pedExistente = pedidoService.obtenerPedidoUUID(pedDto.getUuid());
 				DetProd detNew = detProdService.listarEntidades().stream()
@@ -125,6 +150,7 @@ public class PedidoController {
 			model.addAttribute("estados", Estado.values());
 			model.addAttribute("detalles", obtenerDetallesFiltrados(pedDto));
 			model.addAttribute("clientes", obtenerClientesFiltrados(pedDto));
+			model.addAttribute("series", obtenerSeriesDisponibles(pedDto));
 			return "carpetaPedidos/paginaFormulario";
 		}
 
@@ -135,6 +161,7 @@ public class PedidoController {
 			model.addAttribute("estados", Estado.values());
 			model.addAttribute("detalles", obtenerDetallesFiltrados(pedDto));
 			model.addAttribute("clientes", obtenerClientesFiltrados(pedDto));
+			model.addAttribute("series", obtenerSeriesDisponibles(pedDto));
 			return "carpetaPedidos/paginaFormulario";
 		}
 		return "redirect:/rutaPedidos/listar";
@@ -147,6 +174,7 @@ public class PedidoController {
 		model.addAttribute("estados", Estado.values());
 		model.addAttribute("detalles", obtenerDetallesFiltrados(pedido));
 		model.addAttribute("clientes", obtenerClientesFiltrados(pedido));
+		model.addAttribute("series", obtenerSeriesDisponibles(pedido));
 		return "carpetaPedidos/paginaFormulario";
 	}
 
@@ -154,5 +182,12 @@ public class PedidoController {
 	public String metodoElimina(@PathVariable UUID uuid) {
 		pedidoService.borrar(uuid);
 		return "redirect:/rutaPedidos/listar";
+	}
+
+	@GetMapping("ticket/{uuid}")
+	public String metodoTicket(Model model, @PathVariable UUID uuid) {
+		PedidoDTO pedido = pedidoService.obtenerPedidoUUID(uuid);
+		model.addAttribute("pedido", pedido);
+		return "carpetaPedidos/paginaTicket";
 	}
 }

@@ -68,6 +68,9 @@ public class Pedido {
 	@Column(unique = true)
 	private UUID uuid;
 
+	@jakarta.persistence.OneToMany(mappedBy = "pedido", fetch = jakarta.persistence.FetchType.EAGER)
+	private java.util.List<NumeroSerie> numerosSerie;
+
 	@PrePersist
     private void inicializarUuid() {
         this.uuid = UUID.randomUUID();

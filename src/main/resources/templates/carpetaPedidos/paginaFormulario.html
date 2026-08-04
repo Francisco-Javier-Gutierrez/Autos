@@ -89,6 +89,32 @@
 					</div>
 
 					<div class="mb-3">
+						<label class="form-label fw-bold">Seleccionar Unidad (VIN):</label>
+						<select id="selectNumeroSerie" class="form-select" onchange="onSerialSelected()">
+							<option value="">--- Asignación Automática / Seleccionar VIN ---</option>
+							<option th:each="ns : ${series}" 
+							        th:value="${ns.uuid}" 
+							        th:data-detprod-uuid="${ns.detProd != null ? ns.detProd.uuid : ''}"
+							        th:text="${ns.numeroSerie} + ' (' + ${ns.estadoUnidad} + ')'">
+							</option>
+						</select>
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label fw-bold">Unidades Seleccionadas:</label>
+						<div id="selectedVinsContainer" class="p-2 border rounded bg-white" style="min-height: 50px;">
+							<span class="text-muted fs-7" id="noVinsText">Ninguna unidad seleccionada (Asignación Automática)</span>
+						</div>
+						<div id="hiddenVinsInputs">
+							<input type="hidden" th:each="nsUuid : ${pedido.numeroSerieUuids}" 
+							       class="selected-vin-input" 
+							       name="numeroSerieUuids" 
+							       th:value="${nsUuid}" />
+						</div>
+						<div class="text-danger" th:if="${#fields.hasErrors('numeroSerieUuids')}" th:errors="*{numeroSerieUuids}">Error</div>
+					</div>
+
+					<div class="mb-3">
 						<label class="form-label fw-bold">Cantidad:</label>
 						<input type="number" id="inputCantidad" step="1" class="form-control" th:field="*{cantidad}" placeholder="Ej. 1" oninput="updateTotal()" />
 						<div class="text-danger" th:if="${#fields.hasErrors('cantidad')}" th:errors="*{cantidad}">Error</div>
@@ -159,13 +185,152 @@
 		let selectedPrice = 0;
 		let selectedStock = 0;
 
+		function filterSerials(detProdUuid) {
+			const select = document.getElementById('selectNumeroSerie');
+			
+			if (!select.dataset.originalOptions) {
+				const options = Array.from(select.options).map(opt => ({
+					value: opt.value,
+					text: opt.text,
+					detProdUuid: opt.getAttribute('data-detprod-uuid') || ''
+				}));
+				select.dataset.originalOptions = JSON.stringify(options);
+			}
+			
+			const originalOptions = JSON.parse(select.dataset.originalOptions);
+			select.innerHTML = '';
+			
+			originalOptions.forEach(opt => {
+				if (opt.value === '' || opt.detProdUuid === detProdUuid) {
+					const newOpt = document.createElement('option');
+					newOpt.value = opt.value;
+					newOpt.text = opt.text;
+					newOpt.setAttribute('data-detprod-uuid', opt.detProdUuid);
+					
+					if (opt.value !== '' && document.querySelector(`.selected-vin-input[value="${opt.value}"]`)) {
+						newOpt.disabled = true;
+					}
+					
+					select.appendChild(newOpt);
+				}
+			});
+			select.value = '';
+		}
+
+		function onSerialSelected() {
+			const select = document.getElementById('selectNumeroSerie');
+			const selectedUuid = select.value;
+			if (!selectedUuid) return;
+			const selectedText = select.options[select.selectedIndex].text;
+			addVin(selectedUuid, selectedText);
+		}
+
+		function addVin(uuid, text) {
+			if (!uuid) return;
+			const container = document.getElementById('selectedVinsContainer');
+			const hiddenContainer = document.getElementById('hiddenVinsInputs');
+			const noVinsText = document.getElementById('noVinsText');
+			
+			if (document.querySelector(`.selected-vin-input[value="${uuid}"]`)) {
+				return;
+			}
+			
+			if (noVinsText) noVinsText.style.display = 'none';
+			
+			const badge = document.createElement('div');
+			badge.className = 'badge bg-primary text-white p-2 m-1 d-inline-flex align-items-center selected-vin-badge';
+			badge.id = 'badge-' + uuid;
+			badge.innerHTML = `
+				<span>${text}</span>
+				<button type="button" class="btn-close btn-close-white ms-2" style="font-size: 0.5rem;" onclick="removeVin('${uuid}')"></button>
+			`;
+			container.appendChild(badge);
+			
+			const input = document.createElement('input');
+			input.type = 'hidden';
+			input.className = 'selected-vin-input';
+			input.name = 'numeroSerieUuids';
+			input.value = uuid;
+			hiddenContainer.appendChild(input);
+			
+			const select = document.getElementById('selectNumeroSerie');
+			for (let i = 0; i < select.options.length; i++) {
+				if (select.options[i].value === uuid) {
+					select.options[i].disabled = true;
+					break;
+				}
+			}
+			select.value = '';
+			
+			onVinsCountChanged();
+		}
+
+		function removeVin(uuid) {
+			const badge = document.getElementById('badge-' + uuid);
+			if (badge) badge.remove();
+			
+			const input = document.querySelector(`.selected-vin-input[value="${uuid}"]`);
+			if (input) input.remove();
+			
+			const select = document.getElementById('selectNumeroSerie');
+			for (let i = 0; i < select.options.length; i++) {
+				if (select.options[i].value === uuid) {
+					select.options[i].disabled = false;
+					break;
+				}
+			}
+			
+			const container = document.getElementById('selectedVinsContainer');
+			const badges = container.querySelectorAll('.selected-vin-badge');
+			if (badges.length === 0) {
+				const noVinsText = document.getElementById('noVinsText');
+				if (noVinsText) noVinsText.style.display = 'block';
+			}
+			
+			onVinsCountChanged();
+		}
+
+		function onVinsCountChanged() {
+			const inputs = document.querySelectorAll('.selected-vin-input');
+			const count = inputs.length;
+			const inputCantidad = document.getElementById('inputCantidad');
+			
+			if (count > 0) {
+				inputCantidad.value = count;
+				inputCantidad.readOnly = true;
+				inputCantidad.max = count;
+			} else {
+				inputCantidad.readOnly = false;
+				let maxLimit = selectedStock;
+				const selectVehiculo = document.getElementById('selectVehiculo');
+				const selectedUuid = selectVehiculo.value;
+				if (originalUuid && originalUuid === selectedUuid) {
+					maxLimit = selectedStock + originalCantidad;
+				}
+				inputCantidad.max = maxLimit;
+				if (parseInt(inputCantidad.value) > maxLimit) {
+					inputCantidad.value = maxLimit;
+				}
+			}
+			updateTotal();
+		}
+
 		function selectCar(uuid, price, stock) {
-			// Actualizar el select oculto
 			document.getElementById('selectVehiculo').value = uuid;
 			selectedPrice = price;
 			selectedStock = stock;
 
-			// Actualizar límite de cantidad
+			const selectVehiculo = document.getElementById('selectVehiculo');
+			if (selectVehiculo.dataset.lastUuid && selectVehiculo.dataset.lastUuid !== uuid) {
+				const container = document.getElementById('selectedVinsContainer');
+				container.innerHTML = '<span class="text-muted fs-7" id="noVinsText">Ninguna unidad seleccionada (Asignación Automática)</span>';
+				const hiddenContainer = document.getElementById('hiddenVinsInputs');
+				hiddenContainer.innerHTML = '';
+			}
+			selectVehiculo.dataset.lastUuid = uuid;
+
+			filterSerials(uuid);
+
 			const inputCantidad = document.getElementById('inputCantidad');
 			let maxLimit = stock;
 			if (originalUuid && originalUuid === uuid) {
@@ -178,19 +343,16 @@
 				inputCantidad.value = maxLimit;
 			}
 
-			// Quitar clase activa de todas las tarjetas
 			document.querySelectorAll('.car-card').forEach(card => {
 				card.classList.remove('border-primary', 'bg-light', 'shadow');
 			});
 
-			// Agregar clase activa a la tarjeta seleccionada
 			const selectedCard = document.getElementById('car-card-' + uuid);
 			if (selectedCard) {
 				selectedCard.classList.add('border-primary', 'bg-light', 'shadow');
 			}
 
-			// Actualizar total
-			updateTotal();
+			onVinsCountChanged();
 		}
 
 		function updateTotal() {
@@ -199,8 +361,43 @@
 			document.getElementById('displayTotal').value = total.toFixed(2);
 		}
 
-		// Al cargar la página, si ya hay un vehículo seleccionado (por ejemplo en edición)
 		window.addEventListener('DOMContentLoaded', () => {
+			const selectSerials = document.getElementById('selectNumeroSerie');
+			if (selectSerials && !selectSerials.dataset.originalOptions) {
+				const options = Array.from(selectSerials.options).map(opt => ({
+					value: opt.value,
+					text: opt.text,
+					detProdUuid: opt.getAttribute('data-detprod-uuid') || ''
+				}));
+				selectSerials.dataset.originalOptions = JSON.stringify(options);
+			}
+
+			const preselectedInputs = document.querySelectorAll('.selected-vin-input');
+			preselectedInputs.forEach(input => {
+				const uuid = input.value;
+				let text = uuid;
+				for (let i = 0; i < selectSerials.options.length; i++) {
+					if (selectSerials.options[i].value === uuid) {
+						text = selectSerials.options[i].text;
+						selectSerials.options[i].disabled = true;
+						break;
+					}
+				}
+				
+				const container = document.getElementById('selectedVinsContainer');
+				const noVinsText = document.getElementById('noVinsText');
+				if (noVinsText) noVinsText.style.display = 'none';
+				
+				const badge = document.createElement('div');
+				badge.className = 'badge bg-primary text-white p-2 m-1 d-inline-flex align-items-center selected-vin-badge';
+				badge.id = 'badge-' + uuid;
+				badge.innerHTML = `
+					<span>${text}</span>
+					<button type="button" class="btn-close btn-close-white ms-2" style="font-size: 0.5rem;" onclick="removeVin('${uuid}')"></button>
+				`;
+				container.appendChild(badge);
+			});
+
 			const selectedUuid = document.getElementById('selectVehiculo').value;
 			if (selectedUuid) {
 				const selectEl = document.getElementById('selectVehiculo');

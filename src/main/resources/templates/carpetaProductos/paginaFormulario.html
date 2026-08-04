@@ -12,7 +12,7 @@
 		<h1 th:text="${producto.uuid} != null ? 'Editar Vehículo' : 'Nuevo Vehículo'" class="mb-4"></h1>
 
 		<form th:action="${producto.uuid} == null ? @{/rutaProductos/guardar} : @{/rutaProductos/actualizar}" 
-			  method="post" th:object="${producto}">
+			  method="post" th:object="${producto}" id="productoForm">
 
 			<input type="hidden" th:field="*{uuid}" />
 
@@ -93,5 +93,81 @@
 			<a th:href="@{/rutaProductos/listar}" class="btn btn-secondary">Cancelar</a>
 		</form>
 	</div>
+
+	<!-- Modal para Auto Existente -->
+	<div class="modal fade" id="autoExisteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="autoExisteModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content shadow-lg border-0 rounded-3">
+				<div class="modal-header bg-primary text-dark border-bottom-0">
+					<h5 class="modal-title fw-bold text-dark" id="autoExisteModalLabel">
+						⚠️ ¡El vehículo ya existe!
+					</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body py-4">
+					<p class="mb-2 fs-5 text-dark">Este auto ya ha sido registrado previamente con las mismas características:</p>
+					<div class="p-3 bg-light rounded-3 text-secondary small">
+						<strong>Campos coincidentes:</strong> Marca, SubMarca, Modelo, Año y Condición.
+					</div>
+					<p class="mt-3 mb-0 text-muted">No es posible crear un duplicado de este vehículo.</p>
+				</div>
+				<div class="modal-footer border-top-0 pt-0">
+					<a id="btnEditarAuto" href="#" class="btn btn-primary px-4 fw-semibold">Editar</a>
+					<button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancelar</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		document.addEventListener("DOMContentLoaded", function() {
+			const form = document.getElementById("productoForm");
+			const uuidInput = document.getElementById("uuid") || document.querySelector("input[name='uuid']");
+			
+			// Solo validar duplicados si estamos registrando un auto nuevo (uuid está vacío)
+			if (form && (!uuidInput || !uuidInput.value)) {
+				form.addEventListener("submit", function(event) {
+					event.preventDefault();
+					
+					const marca = document.getElementById("marca").value.trim();
+					const subMarca = document.getElementById("subMarca").value.trim();
+					const modelo = document.getElementById("modelo").value.trim();
+					const anio = document.getElementById("anio").value.trim();
+					const condicion = document.getElementById("condicion").value;
+					
+					if (!marca || !subMarca || !modelo || !anio || !condicion) {
+						form.submit();
+						return;
+					}
+					
+					const params = new URLSearchParams({
+						marca: marca,
+						subMarca: subMarca,
+						modelo: modelo,
+						anio: anio,
+						condicion: condicion
+					});
+					
+					fetch('/rutaProductos/validar-duplicado?' + params.toString())
+						.then(response => response.json())
+						.then(data => {
+							if (data.exists) {
+								const btnEditar = document.getElementById("btnEditarAuto");
+								btnEditar.href = '/rutaProductos/editar/' + data.uuid;
+								
+								const modal = new bootstrap.Modal(document.getElementById('autoExisteModal'));
+								modal.show();
+							} else {
+								form.submit();
+							}
+						})
+						.catch(error => {
+							console.error('Error al validar duplicado:', error);
+							form.submit();
+						});
+				});
+			}
+		});
+	</script>
 </body>
 </html>

@@ -1,6 +1,9 @@
 package com.utsem.app.dto;
 
 import java.util.UUID;
+
+import com.utsem.app.enums.EstatusCliente;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -24,5 +27,5 @@ public class ClienteDTO {
 	@NotBlank(message = "¡El teléfono es obligatorio!")
 	private String telefono;
 
-	private com.utsem.app.enums.EstatusCliente estatus;
+	private EstatusCliente estatus;
 }
